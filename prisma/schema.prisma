@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model School {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  name              String
+  location          String
+  totalStudentsCap  Int?
+  agreementStarts   DateTime
+  status            String   @default("Active") // Active, Pipeline, Inactive
+  students          Student[]
+  transactions      Transaction[]
+  discounts         SchoolDiscount[]
+  onboardingPartnerId String?
+  onboardingPartner   Partner? @relation(fields: [onboardingPartnerId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model SchoolDiscount {
+  id                String   @id @default(cuid())
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  tenure            Int
+  advanceEmi        Int
+  discountRate      Float
+  isActive          Boolean  @default(true)
+  
+  @@unique([schoolId, tenure, advanceEmi])
+}
+
+model FinanceCutoff {
+  id          String   @id @default(cuid())
+  tenure      Int      
+  advanceEmi  Int      
+  subvention  Float    
+  pf          Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([tenure, advanceEmi])
+}
+
+model Partner {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  name              String
+  type              String   // Individual, Organization
+  contactInfo       String
+  revenueShare      Float    // % of FlexiFee setup profit shared
+  transactions      Transaction[]
+  onboardedSchools  School[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Student {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  name              String
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  annualFee         Float
+  loanAmount        Float
+  emiTenureMonths   Int
+  advanceEmi        Int      @default(1)
+  status            String   @default("Active") // Active, Completed, Defaulted
+  transactions      Transaction[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Transaction {
+  id                String   @id @default(cuid())
+  studentId         String
+  student           Student  @relation(fields: [studentId], references: [id])
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  partnerId         String?
+  partner           Partner? @relation(fields: [partnerId], references: [id])
+  
+  feeAmount         Float
+  discountApplied   Float    // Calculated
+  revenueEarned     Float    // Calculated
+  commissionPaid    Float    // Calculated
+  bankCommission    Float    @default(0) // Calculated as 1% of feeAmount
+  date              DateTime @default(now())
+}
