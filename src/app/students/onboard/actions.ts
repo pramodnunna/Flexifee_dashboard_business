@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { generateStudentCode } from "@/lib/codeGenerator";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function submitStudent(formData: FormData) {
   // 1. Gather Inputs
@@ -95,5 +96,7 @@ export async function submitStudent(formData: FormData) {
     });
   });
 
+  revalidatePath('/students');
+  revalidatePath('/');
   redirect('/students');
 }

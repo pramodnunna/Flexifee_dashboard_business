@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { generateSchoolCode } from "@/lib/codeGenerator";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function submitSchool(formData: FormData) {
   const name = formData.get('name')?.toString();
@@ -41,5 +42,7 @@ export async function submitSchool(formData: FormData) {
     }
   });
 
+  revalidatePath('/schools');
+  revalidatePath('/students/onboard');
   redirect('/schools');
 }

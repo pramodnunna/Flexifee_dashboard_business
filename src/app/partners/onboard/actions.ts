@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { generatePartnerCode } from "@/lib/codeGenerator";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function submitPartner(formData: FormData) {
   const name = formData.get('name')?.toString();
@@ -24,5 +25,6 @@ export async function submitPartner(formData: FormData) {
     }
   });
 
+  revalidatePath('/partners');
   redirect('/partners');
 }

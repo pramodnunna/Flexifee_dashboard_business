@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
 import Link from "next/link";
