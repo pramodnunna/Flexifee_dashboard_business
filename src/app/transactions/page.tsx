@@ -49,11 +49,11 @@ export default async function TransactionsPage() {
         </div>
         <div className="card">
           <div className="card-header"><span className="card-title">Bank Commission</span></div>
-          <div className="kpi-value" style={{ color: 'var(--destructive)' }}>{formatCurrency(totalBankCommission)}</div>
+          <div className="kpi-value" style={{ color: 'var(--secondary)' }}>{formatCurrency(totalBankCommission)}</div>
         </div>
         <div className="card" style={{ border: '2px solid var(--primary)' }}>
           <div className="card-header"><span className="card-title">Net Retained</span></div>
-          <div className="kpi-value">{formatCurrency(totalRevenue - totalCommission - totalBankCommission)}</div>
+          <div className="kpi-value">{formatCurrency(totalRevenue - totalCommission + totalBankCommission)}</div>
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export default async function TransactionsPage() {
               Revenue: tx.revenueEarned,
               PartnerCommission: tx.commissionPaid,
               BankCommission: tx.bankCommission,
-              NetProfit: tx.revenueEarned - tx.commissionPaid - tx.bankCommission
+              NetProfit: tx.revenueEarned - tx.commissionPaid + tx.bankCommission
             }))}
           />
         </div>
@@ -97,7 +97,7 @@ export default async function TransactionsPage() {
             </thead>
             <tbody>
               {transactions.map(tx => {
-                const net = tx.revenueEarned - tx.commissionPaid - tx.bankCommission;
+                const net = tx.revenueEarned - tx.commissionPaid + tx.bankCommission;
                 return (
                   <tr key={tx.id}>
                     <td>{new Date(tx.date).toLocaleDateString()}</td>
@@ -124,7 +124,7 @@ export default async function TransactionsPage() {
                     <td style={{ fontWeight: 600 }}>{tx.discountApplied}%</td>
                     <td style={{ color: "var(--secondary)", fontWeight: 600 }}>+{formatCurrency(tx.revenueEarned)}</td>
                     <td style={{ color: "var(--destructive)" }}>-{formatCurrency(tx.commissionPaid)}</td>
-                    <td style={{ color: "var(--destructive)" }}>-{formatCurrency(tx.bankCommission)}</td>
+                    <td style={{ color: "var(--secondary)" }}>+{formatCurrency(tx.bankCommission)}</td>
                     <td style={{ fontWeight: 700, color: net >= 0 ? 'var(--primary)' : 'var(--destructive)' }}>
                       {formatCurrency(net)}
                     </td>

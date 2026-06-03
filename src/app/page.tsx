@@ -38,7 +38,7 @@ export default async function Dashboard() {
   const grossRevenue = transactions.reduce((acc, tx) => acc + tx.revenueEarned, 0);
   const totalCommission = transactions.reduce((acc, tx) => acc + tx.commissionPaid, 0);
   const totalBankCommission = transactions.reduce((acc, tx) => acc + tx.bankCommission, 0);
-  const netRevenue = grossRevenue - totalCommission - totalBankCommission;
+  const netRevenue = grossRevenue - totalCommission + totalBankCommission;
   const avgProfitMargin = transactions.length > 0
     ? transactions.reduce((acc, tx) => acc + tx.discountApplied, 0) / transactions.length
     : 0;
@@ -108,10 +108,10 @@ export default async function Dashboard() {
         <div className="card">
           <div className="card-header">
             <span className="card-title">Bank Commission</span>
-            <span className="badge badge-warning">Outflow</span>
+            <span className="badge badge-success">Inflow</span>
           </div>
-          <div className="kpi-value" style={{ color: 'var(--destructive)' }}>{formatCurrency(totalBankCommission)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>1% of fee volume</div>
+          <div className="kpi-value" style={{ color: 'var(--secondary)' }}>{formatCurrency(totalBankCommission)}</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>1% of fee volume earned</div>
         </div>
 
         <div className="card" style={{ border: '2px solid var(--primary)' }}>
@@ -204,8 +204,8 @@ export default async function Dashboard() {
                   <td style={{ fontWeight: 600 }}>{tx.discountApplied}%</td>
                   <td style={{ color: "var(--secondary)", fontWeight: 600 }}>+{formatCurrency(tx.revenueEarned)}</td>
                   <td style={{ color: "var(--destructive)" }}>-{formatCurrency(tx.commissionPaid)}</td>
-                  <td style={{ color: "var(--destructive)" }}>-{formatCurrency(tx.bankCommission)}</td>
-                  <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(tx.revenueEarned - tx.commissionPaid - tx.bankCommission)}</td>
+                  <td style={{ color: "var(--secondary)" }}>+{formatCurrency(tx.bankCommission)}</td>
+                  <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(tx.revenueEarned - tx.commissionPaid + tx.bankCommission)}</td>
                 </tr>
               ))}
               {transactions.length === 0 && (
