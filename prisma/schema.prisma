@@ -56,6 +56,7 @@ model Partner {
   type              String   // Individual, Organization
   contactInfo       String
   revenueShare      Float    // % of FlexiFee setup profit shared
+  shareBankCommission Boolean  @default(false)
   transactions      Transaction[]
   onboardedSchools  School[]
   createdAt         DateTime @default(now())

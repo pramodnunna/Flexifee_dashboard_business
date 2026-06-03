@@ -41,6 +41,16 @@ export default async function OnboardPartnerPage() {
             </div>
           </div>
 
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>
+              <input type="checkbox" name="shareBankCommission" style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }} />
+              <span>Share Bank Commission?</span>
+            </label>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginLeft: '2rem' }}>
+              If enabled, this partner will earn their revenue share percentage on the bank commission as well as the subvention profit.
+            </p>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
             <a href="/partners" className="btn btn-secondary" style={{ padding: '0.75rem 2rem' }}>Cancel</a>
             <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem 2rem' }}>Onboard Partner</button>

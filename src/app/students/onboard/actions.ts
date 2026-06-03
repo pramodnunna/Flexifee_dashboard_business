@@ -51,6 +51,8 @@ export async function submitStudent(formData: FormData) {
   const flexiProfitPercent = schoolDiscount.discountRate - cutoff.subvention;
   const revenueEarned = (flexiProfitPercent / 100) * annualFee;
 
+  const bankCommission = annualFee * 0.01;
+
   // 4. Commission Attribution Engine Priority
   let finalPartnerId = partnerId || school.onboardingPartnerId;
   let commissionPaid = 0;
@@ -58,11 +60,13 @@ export async function submitStudent(formData: FormData) {
   if (finalPartnerId) {
     const partner = await prisma.partner.findUnique({ where: { id: finalPartnerId } });
     if (partner) {
-      commissionPaid = (partner.revenueShare / 100) * revenueEarned;
+      if (partner.shareBankCommission) {
+        commissionPaid = (partner.revenueShare / 100) * (revenueEarned + bankCommission);
+      } else {
+        commissionPaid = (partner.revenueShare / 100) * revenueEarned;
+      }
     }
   }
-
-  const bankCommission = annualFee * 0.01;
 
   // 5. Database Commit
   const studentCode = await generateStudentCode(school.code);

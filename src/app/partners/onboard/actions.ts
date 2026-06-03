@@ -10,6 +10,7 @@ export async function submitPartner(formData: FormData) {
   const type = formData.get('type')?.toString();
   const contactInfo = formData.get('contactInfo')?.toString();
   const revenueShare = parseFloat(formData.get('revenueShare')?.toString() || '0');
+  const shareBankCommission = formData.get('shareBankCommission') === 'on';
   
   if (!name || !type || !contactInfo || isNaN(revenueShare)) return;
 
@@ -21,7 +22,8 @@ export async function submitPartner(formData: FormData) {
       name,
       type,
       contactInfo,
-      revenueShare
+      revenueShare,
+      shareBankCommission
     }
   });
 
