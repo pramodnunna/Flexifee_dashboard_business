@@ -2,8 +2,13 @@ export const dynamic = 'force-dynamic';
 
 import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
+import { cookies } from "next/headers";
+import { deboardPartner } from "../actions/deboard";
 
 export default async function PartnersPage() {
+  const cookieStore = await cookies();
+  const isAdmin = (cookieStore.get("role")?.value || "admin") === "admin";
+
   const partners = await prisma.partner.findMany({
     include: {
       transactions: {
@@ -53,6 +58,7 @@ export default async function PartnersPage() {
               Rank: index + 1,
               Name: p.name,
               Type: p.type,
+              Status: p.status,
               RevShare: p.revenueShare + '%',
               DealsClosed: p.totalTransactions,
               RevenueContributed: p.revenueContribution,
@@ -68,30 +74,49 @@ export default async function PartnersPage() {
                 <th>Code</th>
                 <th>Partner Name</th>
                 <th>Type</th>
+                <th>Status</th>
                 <th>Rev Share</th>
                 <th>Deals Closed</th>
                 <th>Revenue Contributed</th>
                 <th>Commission Earned</th>
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {partnersWithMetrics.map((partner, index) => (
-                <tr key={partner.id}>
+                <tr key={partner.id} style={partner.status === 'Inactive' ? { opacity: 0.6 } : undefined}>
                   <td>
-                    {index === 0 && <span style={{ fontSize: '1.25rem' }}>🥇 </span>}
-                    {index === 1 && <span style={{ fontSize: '1.25rem' }}>🥈 </span>}
-                    {index === 2 && <span style={{ fontSize: '1.25rem' }}>🥉 </span>}
-                    {index > 2 && `#${index + 1}`}
+                    {index === 0 && partner.status !== 'Inactive' && <span style={{ fontSize: '1.25rem' }}>🥇 </span>}
+                    {index === 1 && partner.status !== 'Inactive' && <span style={{ fontSize: '1.25rem' }}>🥈 </span>}
+                    {index === 2 && partner.status !== 'Inactive' && <span style={{ fontSize: '1.25rem' }}>🥉 </span>}
+                    {((index > 2) || partner.status === 'Inactive') && `#${index + 1}`}
                   </td>
                   <td><span className="badge badge-info" style={{ fontFamily: 'monospace' }}>{partner.code}</span></td>
                   <td style={{ fontWeight: 500 }}>{partner.name}</td>
                   <td>
                     <span className="badge badge-info">{partner.type}</span>
                   </td>
+                  <td>
+                    <span className={`badge ${partner.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>{partner.status}</span>
+                  </td>
                   <td>{partner.revenueShare}%</td>
                   <td>{partner.totalTransactions}</td>
                   <td>₹{partner.revenueContribution.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                   <td style={{ color: "var(--primary)", fontWeight: "600" }}>₹{partner.totalCommission.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+                  {isAdmin && (
+                    <td>
+                      {partner.status === 'Active' ? (
+                        <form action={deboardPartner}>
+                          <input type="hidden" name="id" value={partner.id} />
+                          <button type="submit" className="btn btn-secondary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "var(--destructive)", color: "white", border: "none", cursor: "pointer", borderRadius: "4px" }}>
+                            Deboard
+                          </button>
+                        </form>
+                      ) : (
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deboarded</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
               {partnersWithMetrics.length === 0 && (

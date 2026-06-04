@@ -3,8 +3,13 @@ export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { deboardStudent } from "../actions/deboard";
 
 export default async function StudentsPage() {
+  const cookieStore = await cookies();
+  const isAdmin = (cookieStore.get("role")?.value || "admin") === "admin";
+
   const students = await prisma.student.findMany({
     include: {
       school: { select: { name: true } },
@@ -78,11 +83,12 @@ export default async function StudentsPage() {
                 <th>Financed Amount</th>
                 <th>EMI Details</th>
                 <th>Status</th>
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {students.map(student => (
-                <tr key={student.id}>
+                <tr key={student.id} style={student.status === 'Inactive' ? { opacity: 0.6 } : undefined}>
                   <td>
                     <Link href={`/students/${student.id}`} style={{ textDecoration: 'none' }}>
                       <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline' }}>{student.code}</span>
@@ -94,10 +100,24 @@ export default async function StudentsPage() {
                   <td>₹{student.loanAmount.toLocaleString('en-IN')}</td>
                   <td>{student.emiTenureMonths} Months ({student.advanceEmi} Adv)</td>
                   <td>
-                    <span className={`badge ${student.status === 'Active' ? 'badge-success' : student.status === 'Defaulted' ? 'badge-warning' : 'badge-info'}`}>
+                    <span className={`badge ${student.status === 'Active' ? 'badge-success' : student.status === 'Defaulted' ? 'badge-warning' : 'badge-warning'}`}>
                       {student.status}
                     </span>
                   </td>
+                  {isAdmin && (
+                    <td>
+                      {student.status === 'Active' ? (
+                        <form action={deboardStudent}>
+                          <input type="hidden" name="id" value={student.id} />
+                          <button type="submit" className="btn btn-secondary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "var(--destructive)", color: "white", border: "none", cursor: "pointer", borderRadius: "4px" }}>
+                            Deboard
+                          </button>
+                        </form>
+                      ) : (
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deboarded</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
               {students.length === 0 && (

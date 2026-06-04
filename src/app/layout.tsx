@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
+import RoleSelector from "@/components/RoleSelector";
 
 export const metadata: Metadata = {
   title: "FlexiFee Dashboard",
@@ -17,11 +18,14 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   );
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const currentRole = cookieStore.get("role")?.value || "admin";
+
   return (
     <html lang="en">
       <body>
@@ -47,11 +51,7 @@ export default function RootLayout({
                 {/* Search placeholder */}
               </div>
               <div className="user-profile">
-                {/* Mock role toggle placeholder */}
-                <select className="btn btn-secondary" style={{ padding: "0.25rem 0.5rem" }}>
-                  <option value="admin">Admin Role</option>
-                  <option value="ops">Ops Role</option>
-                </select>
+                <RoleSelector currentRole={currentRole} />
               </div>
             </header>
             
