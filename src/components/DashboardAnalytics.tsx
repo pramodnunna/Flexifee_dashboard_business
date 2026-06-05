@@ -1,6 +1,25 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
+
+interface Transaction {
+  id: string;
+  date: string; // ISO string
+  feeAmount: number;
+  discountApplied: number;
+  revenueEarned: number;
+  commissionPaid: number;
+  bankCommission: number;
+  studentName: string;
+  studentCode: string;
+  schoolName: string;
+  partnerName: string | null;
+  partnerCode: string | null;
+}
+
+interface DashboardAnalyticsProps {
+  transactions: Transaction[];
+}
 
 interface MonthlyData {
   month: string;
@@ -19,11 +38,6 @@ interface DailyData {
   txCount: number;
 }
 
-interface DashboardAnalyticsProps {
-  monthlyData: MonthlyData[];
-  dailyData: DailyData[];
-}
-
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -32,11 +46,191 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export default function DashboardAnalytics({ monthlyData, dailyData }: DashboardAnalyticsProps) {
+export default function DashboardAnalytics({ transactions }: DashboardAnalyticsProps) {
+  // Tabs: daily (Day-wise) vs monthly (Monthly Trend)
   const [activeTab, setActiveTab] = useState<"daily" | "monthly">("daily");
+  
+  // Filter States
+  const [presetRange, setPresetRange] = useState<"7d" | "30d" | "90d" | "this_month" | "all" | "custom">("30d");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize dates based on presetRange
+  useEffect(() => {
+    if (presetRange === "custom") return; // Keep user input for custom
+
+    if (presetRange === "all") {
+      if (transactions.length > 0) {
+        const dates = transactions.map(t => new Date(t.date).getTime());
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...dates));
+        setStartDate(minDate.toISOString().slice(0, 10));
+        setEndDate(maxDate.toISOString().slice(0, 10));
+      } else {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        setStartDate(todayStr);
+        setEndDate(todayStr);
+      }
+    } else {
+      const end = new Date();
+      const start = new Date();
+      if (presetRange === "7d") {
+        start.setDate(end.getDate() - 6);
+      } else if (presetRange === "30d") {
+        start.setDate(end.getDate() - 29);
+      } else if (presetRange === "90d") {
+        start.setDate(end.getDate() - 89);
+      } else if (presetRange === "this_month") {
+        start.setDate(1); // 1st of current month
+      }
+      setStartDate(start.toISOString().slice(0, 10));
+      setEndDate(end.toISOString().slice(0, 10));
+    }
+  }, [presetRange, transactions]);
+
+  // Derived State: Unique months in the transaction dataset for Month filter dropdown
+  const uniqueMonths = useMemo(() => {
+    const monthsSet = new Set<string>();
+    transactions.forEach(tx => {
+      const dateObj = new Date(tx.date);
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      monthsSet.add(`${year}-${month}`);
+    });
+    
+    return Array.from(monthsSet).sort().reverse().map(mKey => {
+      const [year, monthStr] = mKey.split('-');
+      const dateObj = new Date(parseInt(year), parseInt(monthStr) - 1, 1);
+      const monthLabel = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return { key: mKey, label: monthLabel };
+    });
+  }, [transactions]);
+
+  // Derived State: Filtered Daily Data (Rolling dates dynamically generated between startDate & endDate)
+  const dailyData = useMemo(() => {
+    if (!startDate || !endDate) return [];
+    
+    // Generate empty buckets for all days in selected range
+    const dailyMap: Record<string, { gmv: number, netRevenue: number, txCount: number, dateLabel: string }> = {};
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Safety cap to prevent browser lockup on massive date selections
+    const safetyCap = 366;
+    let count = 0;
+    while (start <= end && count < safetyCap) {
+      const dateKey = start.toISOString().slice(0, 10);
+      const dateLabel = start.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      dailyMap[dateKey] = { gmv: 0, netRevenue: 0, txCount: 0, dateLabel };
+      start.setDate(start.getDate() + 1);
+      count++;
+    }
+
+    // Populate daily data buckets with filtered transactions
+    transactions.forEach(tx => {
+      const txDateKey = tx.date.slice(0, 10);
+      
+      // Filter by custom range
+      if (txDateKey >= startDate && txDateKey <= endDate) {
+        // If a specific month is selected, filter daily chart to only that month
+        if (selectedMonth !== "all") {
+          const txMonth = txDateKey.slice(0, 7);
+          if (txMonth !== selectedMonth) return;
+        }
+        
+        if (dailyMap[txDateKey]) {
+          const netRev = tx.revenueEarned - tx.commissionPaid + tx.bankCommission;
+          dailyMap[txDateKey].gmv += tx.feeAmount;
+          dailyMap[txDateKey].netRevenue += netRev;
+          dailyMap[txDateKey].txCount += 1;
+        }
+      }
+    });
+
+    // If month filter is selected, strip out other months' days
+    return Object.keys(dailyMap)
+      .sort()
+      .filter(dateKey => {
+        if (selectedMonth !== "all") {
+          return dateKey.slice(0, 7) === selectedMonth;
+        }
+        return true;
+      })
+      .map(dateKey => {
+        const group = dailyMap[dateKey];
+        return {
+          date: dateKey,
+          dateLabel: group.dateLabel,
+          gmv: group.gmv,
+          netRevenue: group.netRevenue,
+          txCount: group.txCount
+        };
+      });
+  }, [transactions, startDate, endDate, selectedMonth]);
+
+  // Derived State: Filtered Monthly Data
+  const monthlyData = useMemo(() => {
+    const monthlyGroups: Record<string, { gmv: number, netRevenue: number, txCount: number }> = {};
+    
+    // Filter transactions by date range
+    const filteredTxs = transactions.filter(tx => {
+      const txDateKey = tx.date.slice(0, 10);
+      const inDateRange = txDateKey >= startDate && txDateKey <= endDate;
+      
+      if (selectedMonth !== "all") {
+        return inDateRange && txDateKey.slice(0, 7) === selectedMonth;
+      }
+      return inDateRange;
+    });
+
+    filteredTxs.forEach(tx => {
+      const dateObj = new Date(tx.date);
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const monthKey = `${year}-${month}`;
+      const netRev = tx.revenueEarned - tx.commissionPaid + tx.bankCommission;
+      
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = { gmv: 0, netRevenue: 0, txCount: 0 };
+      }
+      monthlyGroups[monthKey].gmv += tx.feeAmount;
+      monthlyGroups[monthKey].netRevenue += netRev;
+      monthlyGroups[monthKey].txCount += 1;
+    });
+
+    return Object.keys(monthlyGroups)
+      .sort()
+      .map((monthKey, index, sortedKeys) => {
+        const group = monthlyGroups[monthKey];
+        const [year, monthStr] = monthKey.split('-');
+        const dateObj = new Date(parseInt(year), parseInt(monthStr) - 1, 1);
+        const monthLabel = dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        
+        let momGrowth = 0;
+        if (index > 0) {
+          const prevGroup = monthlyGroups[sortedKeys[index - 1]];
+          if (prevGroup.netRevenue !== 0) {
+            momGrowth = ((group.netRevenue - prevGroup.netRevenue) / prevGroup.netRevenue) * 100;
+          } else if (group.netRevenue > 0) {
+            momGrowth = 100;
+          }
+        }
+        
+        return {
+          month: monthKey,
+          monthLabel,
+          gmv: group.gmv,
+          netRevenue: group.netRevenue,
+          txCount: group.txCount,
+          momGrowth
+        };
+      });
+  }, [transactions, startDate, endDate, selectedMonth]);
 
   const chartData = activeTab === "daily" ? dailyData : monthlyData;
 
@@ -92,7 +286,6 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
     const mouseX = e.clientX - rect.left - padding.left;
     const chartWidth = rect.width - padding.left - padding.right;
     
-    // Find closest index
     const percent = Math.max(0, Math.min(1, mouseX / chartWidth));
     const rawIdx = percent * (chartData.length - 1);
     const index = Math.round(rawIdx);
@@ -100,7 +293,6 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
     if (index >= 0 && index < chartData.length) {
       setHoveredIndex(index);
       
-      // Calculate tooltip position (absolute positioned relative to container)
       const xPos = getX(index) * (rect.width / width);
       const yPos = getY(chartData[index].gmv) * (rect.height / height) - 85;
       
@@ -115,11 +307,11 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
     setHoveredIndex(null);
   };
 
-  // Y-axis grid line markers
   const gridTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
     <div className="analytics-section">
+      {/* Header Panel */}
       <div className="analytics-header">
         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
           <h2 style={{ fontSize: "1.25rem", fontWeight: "600", color: "var(--text-primary)" }}>
@@ -130,8 +322,133 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
-          <div className="chart-legend">
+        <div className="analytics-tabs" id="analytics-tabs-selector">
+          <button
+            className={`analytics-tab ${activeTab === "daily" ? "active" : ""}`}
+            onClick={() => { setActiveTab("daily"); setHoveredIndex(null); }}
+            id="btn-tab-daily"
+          >
+            Day-wise (Daily Timeline)
+          </button>
+          <button
+            className={`analytics-tab ${activeTab === "monthly" ? "active" : ""}`}
+            onClick={() => { setActiveTab("monthly"); setHoveredIndex(null); }}
+            id="btn-tab-monthly"
+          >
+            Monthly Trend
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Control Toolbar Card */}
+      <div className="card" style={{ marginBottom: "1.5rem", padding: "1rem" }}>
+        <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
+          
+          {/* Preset Selector */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>
+              Date Range Preset
+            </label>
+            <select
+              className="btn btn-secondary"
+              style={{ padding: "0.4rem 0.75rem", fontSize: "0.875rem" }}
+              value={presetRange}
+              onChange={(e) => setPresetRange(e.target.value as any)}
+              id="filter-preset-range"
+            >
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="90d">Last 90 Days</option>
+              <option value="this_month">This Month</option>
+              <option value="all">All Time</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          {/* Custom Date Range Fields (Conditional) */}
+          {presetRange === "custom" && (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>
+                  From Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  style={{
+                    padding: "0.4rem 0.75rem",
+                    borderRadius: "6px",
+                    border: "1px solid var(--border-color)",
+                    backgroundColor: "var(--surface-color)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.875rem",
+                  }}
+                  id="filter-start-date"
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>
+                  To Date
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  style={{
+                    padding: "0.4rem 0.75rem",
+                    borderRadius: "6px",
+                    border: "1px solid var(--border-color)",
+                    backgroundColor: "var(--surface-color)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.875rem",
+                  }}
+                  id="filter-end-date"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Month Filter Dropdown */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>
+              Filter by Billing Month
+            </label>
+            <select
+              className="btn btn-secondary"
+              style={{ padding: "0.4rem 0.75rem", fontSize: "0.875rem" }}
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              id="filter-month"
+            >
+              <option value="all">All Months</option>
+              {uniqueMonths.map(m => (
+                <option key={m.key} value={m.key}>{m.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Reset Filters Shortcut */}
+          <div style={{ alignSelf: "flex-end", paddingBottom: "2px" }}>
+            <button
+              onClick={() => {
+                setPresetRange("30d");
+                setSelectedMonth("all");
+              }}
+              style={{
+                fontSize: "0.8125rem",
+                color: "var(--primary)",
+                fontWeight: "500",
+                textDecoration: "underline",
+              }}
+            >
+              Reset Filters
+            </button>
+          </div>
+
+          {/* Legend visualizer */}
+          <div style={{ marginLeft: "auto", display: "flex", gap: "1.25rem", fontSize: "0.8125rem" }}>
             <div className="legend-item">
               <span className="legend-dot" style={{ backgroundColor: "var(--primary)" }}></span>
               <span>Fee Volume (GMV)</span>
@@ -142,22 +459,6 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
             </div>
           </div>
 
-          <div className="analytics-tabs" id="analytics-tabs-selector">
-            <button
-              className={`analytics-tab ${activeTab === "daily" ? "active" : ""}`}
-              onClick={() => { setActiveTab("daily"); setHoveredIndex(null); }}
-              id="btn-tab-daily"
-            >
-              Day-wise (Last 30 Days)
-            </button>
-            <button
-              className={`analytics-tab ${activeTab === "monthly" ? "active" : ""}`}
-              onClick={() => { setActiveTab("monthly"); setHoveredIndex(null); }}
-              id="btn-tab-monthly"
-            >
-              Monthly Trend
-            </button>
-          </div>
         </div>
       </div>
 
@@ -166,14 +467,14 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
         <div className="card" style={{ display: "flex", flexDirection: "column" }}>
           <div className="card-header">
             <span className="card-title">
-              {activeTab === "daily" ? "Rolling 30-Day Daily Chart" : "Monthly Financial Summary Chart"}
+              {activeTab === "daily" ? "Financial Performance Timeline" : "Monthly Financial Summary Chart"}
             </span>
           </div>
 
           <div className="chart-container" ref={containerRef}>
             {chartData.length === 0 ? (
               <div style={{ textAlign: "center", padding: "4rem 0", color: "var(--text-muted)" }}>
-                No transactional history found to render charts.
+                No transactional history matches the selected filters.
               </div>
             ) : (
               <>
@@ -294,7 +595,6 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
 
                   {/* X-axis date labels */}
                   {chartData.map((d, idx) => {
-                    // Show every label if <= 10 items, else step dynamically to avoid overlapping labels
                     const step = Math.ceil(chartData.length / 10);
                     if (idx % step !== 0 && idx !== chartData.length - 1) return null;
 
@@ -461,7 +761,7 @@ export default function DashboardAnalytics({ monthlyData, dailyData }: Dashboard
               {monthlyData.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ textAlign: "center", padding: "2rem" }}>
-                    No monthly summary data available yet.
+                    No monthly summary data matches the selected filters.
                   </td>
                 </tr>
               )}
