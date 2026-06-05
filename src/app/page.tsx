@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
 import DashboardAnalytics from "@/components/DashboardAnalytics";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 // Utility to format currency
 const formatCurrency = (amount: number) => {
@@ -14,6 +16,12 @@ const formatCurrency = (amount: number) => {
 };
 
 export default async function Dashboard() {
+  const cookieStore = await cookies();
+  const role = cookieStore.get("role")?.value || "admin";
+  if (role !== "admin") {
+    redirect("/students");
+  }
+
   const [
     totalSchools,
     totalStudents,

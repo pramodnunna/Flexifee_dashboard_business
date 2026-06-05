@@ -56,7 +56,11 @@ export async function loginAction(prevState: any, formData: FormData) {
     secure: process.env.NODE_ENV === "production",
   });
 
-  redirect("/");
+  if (role === "admin") {
+    redirect("/");
+  } else {
+    redirect("/students");
+  }
 }
 
 export async function logoutAction() {
