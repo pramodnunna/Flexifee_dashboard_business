@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import RoleSelector from "@/components/RoleSelector";
+import { cookies, headers } from "next/headers";
+import UserProfile from "@/components/UserProfile";
 
 export const metadata: Metadata = {
   title: "FlexiFee Dashboard",
@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 };
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  // Simple hack to detect active without client component for now
   return (
     <Link href={href} className="nav-item">
       {children}
@@ -23,16 +22,37 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "/";
+  const isLoginPage = pathname === "/login";
+
   const cookieStore = await cookies();
   const currentRole = cookieStore.get("role")?.value || "admin";
+  const currentEmail = cookieStore.get("auth_email")?.value || (currentRole === "admin" ? "admin@flexifee.com" : "ops@flexifee.com");
+
+  if (isLoginPage) {
+    return (
+      <html lang="en">
+        <body>
+          <main style={{ minHeight: "100vh", backgroundColor: "var(--bg-color)" }}>
+            {children}
+          </main>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="en">
       <body>
         <div className="app-container">
           <aside className="sidebar">
-            <div className="brand">
-              FlexiFee
+            <div className="sidebar-logo-container">
+              <img
+                src="/flexifee-logo.png"
+                alt="Flexifee Logo"
+                className="sidebar-logo"
+              />
             </div>
             <nav className="nav-links">
               <ul>
@@ -51,7 +71,7 @@ export default async function RootLayout({
                 {/* Search placeholder */}
               </div>
               <div className="user-profile">
-                <RoleSelector currentRole={currentRole} />
+                <UserProfile email={currentEmail} role={currentRole} />
               </div>
             </header>
             
