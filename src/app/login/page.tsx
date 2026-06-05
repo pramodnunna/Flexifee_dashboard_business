@@ -14,7 +14,7 @@ export default function LoginPage() {
 
     if (emailInput && passwordInput && form) {
       emailInput.value = email;
-      passwordInput.value = role === "admin" ? "admin123" : "ops123";
+      passwordInput.value = role === "admin" ? "Flexifee@2026" : "ops123";
       form.requestSubmit(); // Triggers form action submission properly
     }
   };
@@ -80,7 +80,7 @@ export default function LoginPage() {
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => handleQuickLogin("admin@flexifee.com", "admin")}
+            onClick={() => handleQuickLogin("Admin@flexifee.in", "admin")}
             style={{ padding: "0.5rem", fontSize: "0.8125rem" }}
             id="btn-quick-admin"
           >
@@ -89,7 +89,7 @@ export default function LoginPage() {
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => handleQuickLogin("ops@flexifee.com", "ops")}
+            onClick={() => handleQuickLogin("ops@flexifee.in", "ops")}
             style={{ padding: "0.5rem", fontSize: "0.8125rem" }}
             id="btn-quick-ops"
           >

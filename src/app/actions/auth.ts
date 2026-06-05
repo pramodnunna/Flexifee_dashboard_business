@@ -3,6 +3,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+
 export async function loginAction(prevState: any, formData: FormData) {
   const email = formData.get("email")?.toString().trim();
   const password = formData.get("password")?.toString();
@@ -11,17 +14,27 @@ export async function loginAction(prevState: any, formData: FormData) {
     return { success: false, error: "Please fill in all fields." };
   }
 
-  let role: "admin" | "ops" | null = null;
+  // Find user by email (case-insensitive search could be done, but we'll try direct first)
+  const user = await prisma.user.findFirst({
+    where: {
+      email: {
+        equals: email,
+        mode: "insensitive"
+      }
+    }
+  });
 
-  if (email === "admin@flexifee.com" && password === "admin123") {
-    role = "admin";
-  } else if (email === "ops@flexifee.com" && password === "ops123") {
-    role = "ops";
-  }
-
-  if (!role) {
+  if (!user) {
     return { success: false, error: "Invalid email or password." };
   }
+
+  // Verify password
+  const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!passwordMatch) {
+    return { success: false, error: "Invalid email or password." };
+  }
+
+  const role = user.role;
 
   const cookieStore = await cookies();
   cookieStore.set("auth_session", "flexifee_logged_in", {

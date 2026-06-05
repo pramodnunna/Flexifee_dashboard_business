@@ -40,11 +40,8 @@ export default async function Dashboard() {
   const totalCommission = transactions.reduce((acc, tx) => acc + tx.commissionPaid, 0);
   const totalBankCommission = transactions.reduce((acc, tx) => acc + tx.bankCommission, 0);
   const netRevenue = grossRevenue - totalCommission + totalBankCommission;
-  const avgProfitMargin = transactions.length > 0
-    ? transactions.reduce((acc, tx) => acc + tx.discountApplied, 0) / transactions.length
-    : 0;
 
-  // Serialize transactions for client-side analytics filtering and aggregation
+  // Serialize transactions for client-side analytics
   const serializedTransactions = transactions.map(tx => ({
     id: tx.id,
     date: tx.date.toISOString(),
@@ -62,86 +59,88 @@ export default async function Dashboard() {
 
   return (
     <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: "600", marginBottom: "0.5rem" }}>Dashboard Overview</h1>
-        <p style={{ color: "var(--text-secondary)" }}>Live subvention engine metrics. All calculations are real-time.</p>
+      {/* Hero Banner */}
+      <div className="page-hero">
+        <h1>Welcome back, Admin 👋</h1>
+        <p>Here&apos;s your live subvention engine overview. All metrics are calculated in real-time.</p>
       </div>
 
       {/* Main KPI Row */}
       <div className="kpi-grid">
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Schools</span>
-            <span className="badge badge-info">Onboarded</span>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--primary)' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-blue">
+            <span className="material-symbols-outlined">school</span>
           </div>
+          <div className="kpi-label">Schools Onboarded</div>
           <div className="kpi-value">{totalSchools}</div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Students</span>
-            <span className="badge badge-info">Financed</span>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--info)' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-indigo">
+            <span className="material-symbols-outlined">group</span>
           </div>
+          <div className="kpi-label">Students Financed</div>
           <div className="kpi-value">{totalStudents}</div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Partners</span>
-            <span className="badge badge-info">Active</span>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--success)' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-green">
+            <span className="material-symbols-outlined">handshake</span>
           </div>
+          <div className="kpi-label">Active Partners</div>
           <div className="kpi-value">{totalPartners}</div>
         </div>
       </div>
 
       {/* Financial KPI Row */}
       <div className="kpi-grid">
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Fee Volume (GMV)</span>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--primary)' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-blue">
+            <span className="material-symbols-outlined">account_balance_wallet</span>
           </div>
+          <div className="kpi-label">Fee Volume (GMV)</div>
           <div className="kpi-value">{formatCurrency(gmv)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{transactions.length} transactions processed</div>
+          <div className="kpi-sub">{transactions.length} transactions processed</div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Gross Revenue</span>
-            <span className="badge badge-success">Earned</span>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--success)' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-green">
+            <span className="material-symbols-outlined">trending_up</span>
           </div>
-          <div className="kpi-value" style={{ color: 'var(--secondary)' }}>{formatCurrency(grossRevenue)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>From subvention margins</div>
+          <div className="kpi-label">Gross Revenue</div>
+          <div className="kpi-value" style={{ color: 'var(--success)' }}>{formatCurrency(grossRevenue)}</div>
+          <div className="kpi-sub">From subvention margins</div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Commission Paid</span>
-            <span className="badge badge-warning">Outflow</span>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--destructive)' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-red">
+            <span className="material-symbols-outlined">payments</span>
           </div>
+          <div className="kpi-label">Commission Paid</div>
           <div className="kpi-value" style={{ color: 'var(--destructive)' }}>{formatCurrency(totalCommission)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Partner revenue share payouts</div>
+          <div className="kpi-sub">Partner revenue share payouts</div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Bank Commission</span>
-            <span className="badge badge-success">Inflow</span>
+        <div className="kpi-card" style={{ '--kpi-accent': '#F59E0B' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-amber">
+            <span className="material-symbols-outlined">account_balance</span>
           </div>
-          <div className="kpi-value" style={{ color: 'var(--secondary)' }}>{formatCurrency(totalBankCommission)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>1% of fee volume earned</div>
+          <div className="kpi-label">Bank Commission</div>
+          <div className="kpi-value" style={{ color: '#B45309' }}>{formatCurrency(totalBankCommission)}</div>
+          <div className="kpi-sub">1% of fee volume earned</div>
         </div>
 
-        <div className="card" style={{ border: '2px solid var(--primary)' }}>
-          <div className="card-header">
-            <span className="card-title">Net Revenue</span>
-            <span className="badge badge-success">Retained</span>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--primary)', borderColor: 'var(--primary)', borderWidth: '2px' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-blue">
+            <span className="material-symbols-outlined">diamond</span>
           </div>
-          <div className="kpi-value">{formatCurrency(netRevenue)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>After all partner payouts</div>
+          <div className="kpi-label">Net Revenue</div>
+          <div className="kpi-value" style={{ color: 'var(--primary)' }}>{formatCurrency(netRevenue)}</div>
+          <div className="kpi-sub">After all partner payouts</div>
         </div>
       </div>
 
-      {/* Interactive Charts and Monthly/MoM Analytics */}
+      {/* Interactive Charts */}
       <DashboardAnalytics transactions={serializedTransactions} />
 
       {/* Finance Company Cutoff Reference */}
@@ -150,12 +149,19 @@ export default async function Dashboard() {
           <h2 className="card-title">Finance Company Subvention Matrix</h2>
           <span className="badge badge-info">Reference</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
           {cutoffs.map(c => (
-            <div key={c.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{c.tenure}M / {c.advanceEmi} Adv EMI</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--destructive)' }}>{c.subvention}%</div>
-              <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Cutoff Rate</div>
+            <div key={c.id} style={{
+              background: 'var(--bg-color)',
+              padding: '1.25rem',
+              borderRadius: '12px',
+              textAlign: 'center',
+              border: '1px solid var(--border-light)',
+              transition: 'var(--transition-smooth)',
+            }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '0.375rem' }}>{c.tenure}M / {c.advanceEmi} Adv EMI</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--destructive)', letterSpacing: '-0.02em' }}>{c.subvention}%</div>
+              <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.375rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cutoff Rate</div>
             </div>
           ))}
         </div>
@@ -205,8 +211,8 @@ export default async function Dashboard() {
                 <tr key={tx.id}>
                   <td>{new Date(tx.date).toLocaleDateString()}</td>
                   <td>
-                    <div style={{ fontWeight: 500 }}>{tx.student.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontFamily: 'monospace' }}>{tx.student.code}</div>
+                    <div style={{ fontWeight: 600 }}>{tx.student.name}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 500 }}>{tx.student.code}</div>
                   </td>
                   <td>{tx.school.name}</td>
                   <td>
@@ -220,17 +226,20 @@ export default async function Dashboard() {
                       : <span style={{ color: 'var(--text-muted)' }}>Direct</span>
                     }
                   </td>
-                  <td>{formatCurrency(tx.feeAmount)}</td>
-                  <td style={{ fontWeight: 600 }}>{tx.discountApplied}%</td>
-                  <td style={{ color: "var(--secondary)", fontWeight: 600 }}>+{formatCurrency(tx.revenueEarned)}</td>
-                  <td style={{ color: "var(--destructive)" }}>-{formatCurrency(tx.commissionPaid)}</td>
-                  <td style={{ color: "var(--secondary)" }}>+{formatCurrency(tx.bankCommission)}</td>
-                  <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(tx.revenueEarned - tx.commissionPaid + tx.bankCommission)}</td>
+                  <td style={{ fontWeight: 600 }}>{formatCurrency(tx.feeAmount)}</td>
+                  <td><span className="badge badge-info">{tx.discountApplied}%</span></td>
+                  <td style={{ color: "var(--success)", fontWeight: 700 }}>+{formatCurrency(tx.revenueEarned)}</td>
+                  <td style={{ color: "var(--destructive)", fontWeight: 600 }}>-{formatCurrency(tx.commissionPaid)}</td>
+                  <td style={{ color: "var(--success)", fontWeight: 600 }}>+{formatCurrency(tx.bankCommission)}</td>
+                  <td style={{ fontWeight: 800, color: 'var(--primary)' }}>{formatCurrency(tx.revenueEarned - tx.commissionPaid + tx.bankCommission)}</td>
                 </tr>
               ))}
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: "2rem" }}>No transactions yet. Onboard a student to generate your first ledger entry.</td>
+                  <td colSpan={10} style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '32px', display: 'block', marginBottom: '0.75rem' }}>receipt_long</span>
+                    No transactions yet. Onboard a student to generate your first ledger entry.
+                  </td>
                 </tr>
               )}
             </tbody>

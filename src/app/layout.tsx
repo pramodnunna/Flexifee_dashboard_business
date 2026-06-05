@@ -9,9 +9,10 @@ export const metadata: Metadata = {
   description: "Internal dashboard for managing schools, students, and partners for FlexiFee edufintech.",
 };
 
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+function NavLink({ href, icon, children }: { href: string; icon: string; children: React.ReactNode }) {
   return (
     <Link href={href} className="nav-item">
+      <span className="material-symbols-outlined">{icon}</span>
       {children}
     </Link>
   );
@@ -33,6 +34,9 @@ export default async function RootLayout({
   if (isLoginPage) {
     return (
       <html lang="en">
+        <head>
+          <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+        </head>
         <body>
           <main style={{ minHeight: "100vh", backgroundColor: "var(--bg-color)" }}>
             {children}
@@ -44,6 +48,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+      </head>
       <body>
         <div className="app-container">
           <aside className="sidebar">
@@ -55,12 +62,20 @@ export default async function RootLayout({
               />
             </div>
             <nav className="nav-links">
+              <div className="nav-section-label">Main</div>
               <ul>
-                <li><NavLink href="/">Dashboard</NavLink></li>
-                <li><NavLink href="/schools">Schools</NavLink></li>
-                <li><NavLink href="/partners">Partners</NavLink></li>
-                <li><NavLink href="/students">Students</NavLink></li>
-                <li><NavLink href="/transactions">Transactions</NavLink></li>
+                <li><NavLink href="/" icon="dashboard">Dashboard</NavLink></li>
+                <li><NavLink href="/schools" icon="school">Schools</NavLink></li>
+                <li><NavLink href="/partners" icon="handshake">Partners</NavLink></li>
+                <li><NavLink href="/students" icon="group">Students</NavLink></li>
+                <li><NavLink href="/transactions" icon="receipt_long">Transactions</NavLink></li>
+              </ul>
+              <div className="nav-section-label">Settings</div>
+              <ul>
+                {currentRole === "admin" && (
+                  <li><NavLink href="/users" icon="manage_accounts">Users</NavLink></li>
+                )}
+                <li><NavLink href="/profile" icon="person">Profile</NavLink></li>
               </ul>
             </nav>
           </aside>

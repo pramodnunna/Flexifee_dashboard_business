@@ -96,3 +96,13 @@ model Transaction {
   bankCommission    Float    @default(0) // Calculated as 1% of feeAmount
   date              DateTime @default(now())
 }
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("ops") // admin, ops
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
