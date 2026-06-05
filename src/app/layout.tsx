@@ -3,6 +3,7 @@ import "./globals.css";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import UserProfile from "@/components/UserProfile";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "FlexiFee Dashboard",
@@ -97,6 +98,7 @@ export default async function RootLayout({
             </div>
           </main>
         </div>
+        <SpeedInsights />
       </body>
     </html>
   );
