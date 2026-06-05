@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
+import DashboardAnalytics from "@/components/DashboardAnalytics";
 
 // Utility to format currency
 const formatCurrency = (amount: number) => {
@@ -42,6 +43,87 @@ export default async function Dashboard() {
   const avgProfitMargin = transactions.length > 0
     ? transactions.reduce((acc, tx) => acc + tx.discountApplied, 0) / transactions.length
     : 0;
+
+  // 1. Monthly Aggregation
+  const monthlyGroups: Record<string, { gmv: number, netRevenue: number, txCount: number }> = {};
+  
+  transactions.forEach(tx => {
+    const year = tx.date.getFullYear();
+    const month = String(tx.date.getMonth() + 1).padStart(2, '0');
+    const monthKey = `${year}-${month}`;
+    const netRev = tx.revenueEarned - tx.commissionPaid + tx.bankCommission;
+    
+    if (!monthlyGroups[monthKey]) {
+      monthlyGroups[monthKey] = { gmv: 0, netRevenue: 0, txCount: 0 };
+    }
+    monthlyGroups[monthKey].gmv += tx.feeAmount;
+    monthlyGroups[monthKey].netRevenue += netRev;
+    monthlyGroups[monthKey].txCount += 1;
+  });
+
+  const monthlyData = Object.keys(monthlyGroups)
+    .sort()
+    .map((monthKey, index, sortedKeys) => {
+      const group = monthlyGroups[monthKey];
+      const [year, monthStr] = monthKey.split('-');
+      const dateObj = new Date(parseInt(year), parseInt(monthStr) - 1, 1);
+      const monthLabel = dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      
+      let momGrowth = 0;
+      if (index > 0) {
+        const prevGroup = monthlyGroups[sortedKeys[index - 1]];
+        if (prevGroup.netRevenue !== 0) {
+          momGrowth = ((group.netRevenue - prevGroup.netRevenue) / prevGroup.netRevenue) * 100;
+        } else if (group.netRevenue > 0) {
+          momGrowth = 100;
+        }
+      }
+      
+      return {
+        month: monthKey,
+        monthLabel,
+        gmv: group.gmv,
+        netRevenue: group.netRevenue,
+        txCount: group.txCount,
+        momGrowth
+      };
+    });
+
+  // 2. Daily Aggregation (Rolling Last 30 Days)
+  const dailyDataMap: Record<string, { gmv: number, netRevenue: number, txCount: number, dateLabel: string }> = {};
+  const today = new Date();
+  
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const dateKey = d.toISOString().slice(0, 10);
+    const dateLabel = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    
+    dailyDataMap[dateKey] = { gmv: 0, netRevenue: 0, txCount: 0, dateLabel };
+  }
+  
+  transactions.forEach(tx => {
+    const dateKey = tx.date.toISOString().slice(0, 10);
+    if (dailyDataMap[dateKey]) {
+      const netRev = tx.revenueEarned - tx.commissionPaid + tx.bankCommission;
+      dailyDataMap[dateKey].gmv += tx.feeAmount;
+      dailyDataMap[dateKey].netRevenue += netRev;
+      dailyDataMap[dateKey].txCount += 1;
+    }
+  });
+
+  const dailyData = Object.keys(dailyDataMap)
+    .sort()
+    .map(dateKey => {
+      const group = dailyDataMap[dateKey];
+      return {
+        date: dateKey,
+        dateLabel: group.dateLabel,
+        gmv: group.gmv,
+        netRevenue: group.netRevenue,
+        txCount: group.txCount
+      };
+    });
 
   return (
     <div>
@@ -123,6 +205,9 @@ export default async function Dashboard() {
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>After all partner payouts</div>
         </div>
       </div>
+
+      {/* Interactive Charts and Monthly/MoM Analytics */}
+      <DashboardAnalytics monthlyData={monthlyData} dailyData={dailyData} />
 
       {/* Finance Company Cutoff Reference */}
       <div className="card" style={{ marginBottom: '2rem' }}>
