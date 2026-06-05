@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
 import { cookies } from "next/headers";
-import { deboardPartner } from "../actions/deboard";
+import { deboardPartner, activatePartner } from "../actions/deboard";
 
 export default async function PartnersPage() {
   const cookieStore = await cookies();
@@ -113,7 +113,15 @@ export default async function PartnersPage() {
                           </button>
                         </form>
                       ) : (
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deboarded</span>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deboarded</span>
+                          <form action={activatePartner}>
+                            <input type="hidden" name="id" value={partner.id} />
+                            <button type="submit" className="btn btn-primary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", cursor: "pointer", borderRadius: "4px" }}>
+                              Re-activate
+                            </button>
+                          </form>
+                        </div>
                       )}
                     </td>
                   )}

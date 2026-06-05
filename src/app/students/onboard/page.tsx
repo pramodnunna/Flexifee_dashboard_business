@@ -15,6 +15,7 @@ export default async function OnboardStudentPage({ searchParams }: { searchParam
   });
 
   const partners = await prisma.partner.findMany({
+    where: { status: 'Active' },
     orderBy: { name: 'asc' }
   });
 

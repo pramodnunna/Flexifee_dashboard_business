@@ -5,6 +5,7 @@ import { submitSchool } from "./actions";
 
 export default async function OnboardSchoolPage() {
   const partners = await prisma.partner.findMany({
+    where: { status: 'Active' },
     orderBy: { name: 'asc' }
   });
 

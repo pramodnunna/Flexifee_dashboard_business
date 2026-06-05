@@ -38,3 +38,15 @@ export async function deboardStudent(formData: FormData) {
 
   revalidatePath('/students');
 }
+
+export async function activatePartner(formData: FormData) {
+  const id = formData.get('id')?.toString();
+  if (!id) return;
+
+  await prisma.partner.update({
+    where: { id },
+    data: { status: 'Active' }
+  });
+
+  revalidatePath('/partners');
+}
