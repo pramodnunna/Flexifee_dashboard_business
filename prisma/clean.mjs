@@ -53,6 +53,18 @@ async function main() {
   })
   console.log('✓ Seeded default Admin account.')
   
+  console.log('Seeding default Ops user...')
+  const opsPasswordHash = await bcrypt.hash('ops123', 10)
+  await prisma.user.create({
+    data: {
+      email: 'ops@flexifee.in',
+      name: 'Operations Officer',
+      role: 'ops',
+      passwordHash: opsPasswordHash
+    }
+  })
+  console.log('✓ Seeded default Ops account.')
+  
   console.log('\nDatabase cleaned successfully! Ready for real onboarding data.')
 }
 
