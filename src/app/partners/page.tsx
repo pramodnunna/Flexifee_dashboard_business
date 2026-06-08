@@ -93,7 +93,11 @@ export default async function PartnersPage() {
                     {((index > 2) || partner.status === 'Inactive') && `#${index + 1}`}
                   </td>
                   <td><span className="badge badge-info" style={{ fontFamily: 'monospace' }}>{partner.code}</span></td>
-                  <td style={{ fontWeight: 500 }}>{partner.name}</td>
+                  <td style={{ fontWeight: 500 }}>
+                    <Link href={`/partners/${partner.id}`} style={{ textDecoration: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>
+                      {partner.name}
+                    </Link>
+                  </td>
                   <td>
                     <span className="badge badge-info">{partner.type}</span>
                   </td>
