@@ -42,6 +42,7 @@ export default async function RootLayout({
           <main style={{ minHeight: "100vh", backgroundColor: "var(--bg-color)" }}>
             {children}
           </main>
+          <SpeedInsights />
         </body>
       </html>
     );
