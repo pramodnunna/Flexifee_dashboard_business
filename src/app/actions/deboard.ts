@@ -50,3 +50,16 @@ export async function activatePartner(formData: FormData) {
 
   revalidatePath('/partners');
 }
+
+export async function activateSchool(formData: FormData) {
+  const id = formData.get('id')?.toString();
+  if (!id) return;
+
+  await prisma.school.update({
+    where: { id },
+    data: { status: 'Active' }
+  });
+
+  revalidatePath('/schools');
+  revalidatePath('/students/onboard');
+}

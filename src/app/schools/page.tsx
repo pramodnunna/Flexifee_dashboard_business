@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { deboardSchool } from "../actions/deboard";
+import { deboardSchool, activateSchool } from "../actions/deboard";
 
 export default async function SchoolsPage() {
   const cookieStore = await cookies();
@@ -115,7 +115,12 @@ export default async function SchoolsPage() {
                               </button>
                             </form>
                           ) : (
-                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deboarded</span>
+                            <form action={activateSchool}>
+                              <input type="hidden" name="id" value={school.id} />
+                              <button type="submit" className="btn btn-primary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", cursor: "pointer", borderRadius: "4px" }}>
+                                Re-onboard
+                              </button>
+                            </form>
                           )}
                         </div>
                       </td>
