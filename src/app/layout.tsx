@@ -66,10 +66,17 @@ export default async function RootLayout({
               <div className="nav-section-label">Main</div>
               <ul>
                 {currentRole === "admin" && (
-                  <li><NavLink href="/" icon="dashboard">Dashboard</NavLink></li>
+                  <li><NavLink href="/" icon="dashboard">Admin Dashboard</NavLink></li>
                 )}
-                <li><NavLink href="/schools" icon="school">Schools</NavLink></li>
-                <li><NavLink href="/partners" icon="handshake">Partners</NavLink></li>
+                {(currentRole === "admin" || currentRole === "partner") && (
+                  <li><NavLink href="/partner-dashboard" icon="handshake">Partner Portal</NavLink></li>
+                )}
+                {currentRole !== "partner" && (
+                  <li><NavLink href="/schools" icon="school">Schools</NavLink></li>
+                )}
+                {currentRole !== "partner" && (
+                  <li><NavLink href="/partners" icon="handshake">Partners</NavLink></li>
+                )}
                 <li><NavLink href="/students" icon="group">Students</NavLink></li>
                 <li><NavLink href="/transactions" icon="receipt_long">Transactions</NavLink></li>
               </ul>

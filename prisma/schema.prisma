@@ -60,6 +60,7 @@ model Partner {
   status            String   @default("Active") // Active, Inactive
   transactions      Transaction[]
   onboardedSchools  School[]
+  users             User[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
@@ -102,7 +103,9 @@ model User {
   email        String   @unique
   name         String
   passwordHash String
-  role         String   @default("ops") // admin, ops
+  role         String   @default("ops") // admin, ops, partner
+  partnerId    String?
+  partner      Partner? @relation(fields: [partnerId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

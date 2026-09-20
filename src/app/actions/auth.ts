@@ -56,8 +56,36 @@ export async function loginAction(prevState: any, formData: FormData) {
     secure: process.env.NODE_ENV === "production",
   });
 
+  if (user.partnerId) {
+    cookieStore.set("partner_id", user.partnerId, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  } else if (role === "partner") {
+    const linkedPartner = await prisma.partner.findFirst({
+      where: {
+        contactInfo: {
+          contains: email,
+          mode: "insensitive"
+        }
+      }
+    });
+    if (linkedPartner) {
+      cookieStore.set("partner_id", linkedPartner.id, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+  }
+
   if (role === "admin") {
     redirect("/");
+  } else if (role === "partner") {
+    redirect("/partner-dashboard");
   } else {
     redirect("/students");
   }
@@ -68,6 +96,7 @@ export async function logoutAction() {
   cookieStore.delete("auth_session");
   cookieStore.delete("role");
   cookieStore.delete("auth_email");
+  cookieStore.delete("partner_id");
   
   redirect("/login");
 }

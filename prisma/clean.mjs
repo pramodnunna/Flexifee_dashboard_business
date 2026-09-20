@@ -64,6 +64,31 @@ async function main() {
     }
   })
   console.log('✓ Seeded default Ops account.')
+
+  console.log('Seeding default Partner and Partner user...')
+  const demoPartner = await prisma.partner.create({
+    data: {
+      code: 'EDU101',
+      name: 'EduConsult Pvt Ltd',
+      type: 'Organization',
+      contactInfo: 'partner@flexifee.in',
+      revenueShare: 50.0,
+      shareBankCommission: true,
+      status: 'Active'
+    }
+  })
+
+  const partnerPasswordHash = await bcrypt.hash('partner123', 10)
+  await prisma.user.create({
+    data: {
+      email: 'partner@flexifee.in',
+      name: 'EduConsult Partner',
+      role: 'partner',
+      passwordHash: partnerPasswordHash,
+      partnerId: demoPartner.id
+    }
+  })
+  console.log('✓ Seeded default Partner account (EduConsult Pvt Ltd).')
   
   console.log('\nDatabase cleaned successfully! Ready for real onboarding data.')
 }

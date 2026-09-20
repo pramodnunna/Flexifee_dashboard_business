@@ -14,7 +14,7 @@ export default function LoginPage() {
 
     if (emailInput && passwordInput && form) {
       emailInput.value = email;
-      passwordInput.value = role === "admin" ? "Flexifee@2026" : "ops123";
+      passwordInput.value = role === "admin" ? "Flexifee@2026" : role === "partner" ? "partner123" : "ops123";
       form.requestSubmit(); // Triggers form action submission properly
     }
   };
@@ -76,24 +76,33 @@ export default function LoginPage() {
 
         {/* Quick Login Section */}
         <div className="quick-login-divider">Demo Accounts</div>
-        <div className="quick-login-buttons">
+        <div className="quick-login-buttons" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => handleQuickLogin("Admin@flexifee.in", "admin")}
-            style={{ padding: "0.5rem", fontSize: "0.8125rem" }}
+            style={{ padding: "0.5rem 0.25rem", fontSize: "0.75rem" }}
             id="btn-quick-admin"
           >
-            Admin Account
+            Admin
           </button>
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => handleQuickLogin("ops@flexifee.in", "ops")}
-            style={{ padding: "0.5rem", fontSize: "0.8125rem" }}
+            style={{ padding: "0.5rem 0.25rem", fontSize: "0.75rem" }}
             id="btn-quick-ops"
           >
-            Ops Account
+            Ops
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => handleQuickLogin("partner@flexifee.in", "partner")}
+            style={{ padding: "0.5rem 0.25rem", fontSize: "0.75rem" }}
+            id="btn-quick-partner"
+          >
+            Partner
           </button>
         </div>
       </div>
