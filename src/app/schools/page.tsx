@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/prisma";
 import ExportButton from "@/components/ExportButton";
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { deboardSchool } from "../actions/deboard";
 
 export default async function SchoolsPage() {
@@ -102,16 +103,21 @@ export default async function SchoolsPage() {
                     </td>
                     {isAdmin && (
                       <td>
-                        {school.status === 'Active' ? (
-                          <form action={deboardSchool}>
-                            <input type="hidden" name="id" value={school.id} />
-                            <button type="submit" className="btn btn-secondary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "var(--destructive)", color: "white", border: "none", cursor: "pointer", borderRadius: "4px" }}>
-                              Deboard
-                            </button>
-                          </form>
-                        ) : (
-                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deboarded</span>
-                        )}
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <Link href={`/schools/${school.id}/edit`} className="btn btn-secondary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", textDecoration: 'none' }}>
+                            Edit
+                          </Link>
+                          {school.status === 'Active' ? (
+                            <form action={deboardSchool}>
+                              <input type="hidden" name="id" value={school.id} />
+                              <button type="submit" className="btn btn-secondary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", backgroundColor: "var(--destructive)", color: "white", border: "none", cursor: "pointer", borderRadius: "4px" }}>
+                                Deboard
+                              </button>
+                            </form>
+                          ) : (
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deboarded</span>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
