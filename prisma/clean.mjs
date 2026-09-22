@@ -28,11 +28,11 @@ async function main() {
   console.log('Re-seeding baseline FinanceCutoff matrix...')
   await prisma.financeCutoff.deleteMany()
   const cutoffs = [
-    { tenure: 6, advanceEmi: 1, subvention: 6.5, pf: 0 },
-    { tenure: 8, advanceEmi: 1, subvention: 8.0, pf: 0 },
-    { tenure: 10, advanceEmi: 1, subvention: 9.5, pf: 0 },
-    { tenure: 10, advanceEmi: 2, subvention: 8.0, pf: 0 },
-    { tenure: 12, advanceEmi: 2, subvention: 9.5, pf: 0 },
+    { tenure: 6, advanceEmi: 1, subvention: 4.5, pf: 0 },
+    { tenure: 8, advanceEmi: 1, subvention: 6.0, pf: 0 },
+    { tenure: 10, advanceEmi: 1, subvention: 7.5, pf: 0 },
+    { tenure: 10, advanceEmi: 2, subvention: 6.0, pf: 0 },
+    { tenure: 12, advanceEmi: 2, subvention: 7.5, pf: 0 },
   ]
   for (const c of cutoffs) {
     await prisma.financeCutoff.create({ data: c })

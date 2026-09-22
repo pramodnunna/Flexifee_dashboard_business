@@ -62,27 +62,38 @@ export default async function OnboardSchoolPage() {
               Define the discount percentage the school is offering us for each Loan Tenure + Advance EMI configuration. Leave empty if a config is not supported by this school.
             </p>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              {cutoffs.map(cutoff => (
-                <div key={cutoff.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '6px' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>
-                    {cutoff.tenure} Months | {cutoff.advanceEmi} Adv EMI
-                  </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input 
-                      type="number" 
-                      step="0.1" 
-                      name={`discount_${cutoff.tenure}_${cutoff.advanceEmi}`} 
-                      placeholder={`e.g. ${cutoff.subvention + 2}`} 
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)' }} 
-                    />
-                    <span style={{ color: 'var(--text-muted)' }}>%</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              {cutoffs.map(cutoff => {
+                const partnerBaseRateMap: Record<string, number> = {
+                  "6_1": 6.50,
+                  "8_1": 8.00,
+                  "10_1": 9.50,
+                  "10_2": 8.00,
+                  "12_2": 9.50,
+                };
+                const partnerBaseRate = partnerBaseRateMap[`${cutoff.tenure}_${cutoff.advanceEmi}`] || (cutoff.subvention + 2);
+                
+                return (
+                  <div key={cutoff.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '6px' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>
+                      {cutoff.tenure} Months | {cutoff.advanceEmi} Adv EMI
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input 
+                        type="number" 
+                        step="0.1" 
+                        name={`discount_${cutoff.tenure}_${cutoff.advanceEmi}`} 
+                        placeholder={`e.g. ${partnerBaseRate}%`} 
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)' }} 
+                      />
+                      <span style={{ color: 'var(--text-muted)' }}>%</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
+                      Partner Base: <strong>{partnerBaseRate}%</strong> | Cutoff: {cutoff.subvention}%
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
-                    Finance Cutoff: {cutoff.subvention}%
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

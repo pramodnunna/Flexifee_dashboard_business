@@ -156,6 +156,15 @@ export default async function EditSchoolPage({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
               {cutoffs.map(cutoff => {
                 const existingRate = discountMap[`${cutoff.tenure}_${cutoff.advanceEmi}`];
+                const partnerBaseRateMap: Record<string, number> = {
+                  "6_1": 6.50,
+                  "8_1": 8.00,
+                  "10_1": 9.50,
+                  "10_2": 8.00,
+                  "12_2": 9.50,
+                };
+                const partnerBaseRate = partnerBaseRateMap[`${cutoff.tenure}_${cutoff.advanceEmi}`] || (cutoff.subvention + 2);
+
                 return (
                   <div key={cutoff.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
@@ -167,13 +176,13 @@ export default async function EditSchoolPage({
                         step="0.1"
                         name={`discount_${cutoff.tenure}_${cutoff.advanceEmi}`}
                         defaultValue={existingRate !== undefined ? existingRate : ''}
-                        placeholder={`Baseline cutoff: ${cutoff.subvention}%`}
+                        placeholder={`Partner Base: ${partnerBaseRate}%`}
                         style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)' }}
                       />
                       <span style={{ color: 'var(--text-muted)' }}>%</span>
                     </div>
                     <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
-                      Baseline Finance Cutoff: {cutoff.subvention}%
+                      Partner Base: <strong>{partnerBaseRate}%</strong> | Cutoff: {cutoff.subvention}%
                     </div>
                   </div>
                 );
