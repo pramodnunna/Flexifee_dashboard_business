@@ -162,7 +162,7 @@ export async function importStudents(prevState: any, formData: FormData): Promis
         } else if (partner.defaultCommission !== null && partner.defaultCommission !== undefined) {
           commissionRate = partner.defaultCommission;
         } else {
-          commissionRate = 2.0;
+          commissionRate = 1.0;
         }
         commissionAmount = loanAmount * (commissionRate / 100);
       }

@@ -36,7 +36,7 @@ export default async function OnboardPartnerPage() {
               Standard commission rate calculated on the disbursed loan amount for transactions attributed to this partner. (Can be overridden per school).
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input type="number" step="0.1" name="defaultCommission" defaultValue="2.0" required style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
+              <input type="number" step="0.1" name="defaultCommission" defaultValue="1.0" required style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
               <span style={{ color: 'var(--text-muted)' }}>%</span>
             </div>
           </div>

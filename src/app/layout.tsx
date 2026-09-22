@@ -68,7 +68,7 @@ export default async function RootLayout({
                 {currentRole === "admin" && (
                   <li><NavLink href="/" icon="dashboard">Admin Dashboard</NavLink></li>
                 )}
-                {(currentRole === "admin" || currentRole === "partner") && (
+                {currentRole === "partner" && (
                   <li><NavLink href="/partner-dashboard" icon="handshake">Partner Portal</NavLink></li>
                 )}
                 {currentRole !== "partner" && (

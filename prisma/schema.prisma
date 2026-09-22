@@ -56,7 +56,7 @@ model Partner {
   name              String
   type              String   // Individual, Organization
   contactInfo       String
-  defaultCommission Float    @default(2.0) // Default partner commission % on loan amount
+  defaultCommission Float    @default(1.0) // Default partner commission % on loan amount (1.0%)
   status            String   @default("Active") // Active, Inactive
   transactions      Transaction[]
   onboardedSchools  School[]

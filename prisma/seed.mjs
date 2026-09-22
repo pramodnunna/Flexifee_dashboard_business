@@ -37,11 +37,11 @@ async function main() {
 
   console.log('Seeding Finance Cutoffs...')
   const cutoffs = [
-    { tenure: 6, advanceEmi: 1, subvention: 4.5, pf: 0 },
-    { tenure: 8, advanceEmi: 1, subvention: 6.0, pf: 0 },
-    { tenure: 10, advanceEmi: 1, subvention: 7.5, pf: 0 },
-    { tenure: 10, advanceEmi: 2, subvention: 6.0, pf: 0 },
-    { tenure: 12, advanceEmi: 2, subvention: 7.5, pf: 0 },
+    { tenure: 6, advanceEmi: 1, subvention: 6.5, pf: 0 },
+    { tenure: 8, advanceEmi: 1, subvention: 8.0, pf: 0 },
+    { tenure: 10, advanceEmi: 1, subvention: 9.5, pf: 0 },
+    { tenure: 10, advanceEmi: 2, subvention: 8.0, pf: 0 },
+    { tenure: 12, advanceEmi: 2, subvention: 9.5, pf: 0 },
   ]
   for (const c of cutoffs) {
     await prisma.financeCutoff.create({ data: c })
@@ -91,7 +91,7 @@ async function main() {
       name: 'EduConsult Pvt Ltd',
       type: 'Organization',
       contactInfo: 'contact@educonsult.com',
-      defaultCommission: 2.5,
+      defaultCommission: 1.0,
     }
   })
 
@@ -101,7 +101,7 @@ async function main() {
       name: 'Rahul Sharma',
       type: 'Individual',
       contactInfo: 'rahul.s@example.com',
-      defaultCommission: 2.0,
+      defaultCommission: 1.0,
     }
   })
 
@@ -157,7 +157,7 @@ async function main() {
 
     if (finalPartnerId) {
       const partnerObj = finalPartnerId === partner1.id ? partner1 : partner2
-      commissionRate = partnerObj.defaultCommission || 2.0
+      commissionRate = partnerObj.defaultCommission || 1.0
       commissionAmount = s.loanAmount * (commissionRate / 100)
     }
 
