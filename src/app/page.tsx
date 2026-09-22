@@ -45,7 +45,7 @@ export default async function Dashboard() {
 
   const gmv = transactions.reduce((acc, tx) => acc + tx.feeAmount, 0);
   const grossRevenue = transactions.reduce((acc, tx) => acc + tx.revenueEarned, 0);
-  const totalCommission = transactions.reduce((acc, tx) => acc + tx.commissionPaid, 0);
+  const totalCommission = transactions.reduce((acc, tx) => acc + (tx.commissionAmount || tx.commissionPaid || 0), 0);
   const totalBankCommission = transactions.reduce((acc, tx) => acc + tx.bankCommission, 0);
   const netRevenue = grossRevenue - totalCommission + totalBankCommission;
 
@@ -56,7 +56,7 @@ export default async function Dashboard() {
     feeAmount: tx.feeAmount,
     discountApplied: tx.discountApplied,
     revenueEarned: tx.revenueEarned,
-    commissionPaid: tx.commissionPaid,
+    commissionPaid: tx.commissionAmount || tx.commissionPaid || 0,
     bankCommission: tx.bankCommission,
     studentName: tx.student.name,
     studentCode: tx.student.code,
@@ -190,9 +190,9 @@ export default async function Dashboard() {
                 FeeAmount: tx.feeAmount,
                 DiscountApplied: tx.discountApplied + '%',
                 Revenue: tx.revenueEarned,
-                PartnerCommission: tx.commissionPaid,
+                PartnerCommission: tx.commissionAmount || tx.commissionPaid || 0,
                 BankCommission: tx.bankCommission,
-                NetProfit: tx.revenueEarned - tx.commissionPaid - tx.bankCommission
+                NetProfit: tx.revenueEarned - (tx.commissionAmount || tx.commissionPaid || 0) + tx.bankCommission
               }))}
             />
             <a href="/transactions" className="btn btn-secondary">View All</a>

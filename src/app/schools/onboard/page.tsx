@@ -37,14 +37,22 @@ export default async function OnboardSchoolPage() {
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Onboarding Partner (Optional)</label>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                If you select a partner, they will automatically earn a revenue share on all transactions from this school.
+                If you select a partner, they will automatically earn a loan-volume commission on all transactions from this school.
               </p>
               <select name="partnerId" style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                 <option value="">-- No Partner (Direct Sales) --</option>
                 {partners.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.type})</option>
+                  <option key={p.id} value={p.id}>{p.name} ({p.type} - Default {p.defaultCommission}%)</option>
                 ))}
               </select>
+            </div>
+
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>School-Specific Commission Override (%) (Optional)</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                Override the partner's default commission rate for this specific school. Leave blank to use the partner's default rate.
+              </p>
+              <input type="number" step="0.1" min="0" max="100" name="partnerCommissionRate" placeholder="e.g. 2.5 (Leave blank for Partner Default)" style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
             </div>
           </div>
 

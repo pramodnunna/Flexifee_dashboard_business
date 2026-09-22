@@ -76,32 +76,22 @@ export default async function PartnerDashboardPage({
 
   // Calculate metrics
   const onboardedSchoolsCount = partner.onboardedSchools.length;
-
-  // Total Business Brought In (GMV from transactions attributed directly or via onboarded schools)
   const directTransactions = partner.transactions;
-  const onboardedSchoolIds = new Set(partner.onboardedSchools.map(s => s.id));
+
+  const totalBusinessLoanVolume = directTransactions.reduce((sum, tx) => sum + (tx.loanAmount || 0), 0);
+  const totalCommissionEarned = directTransactions.reduce((sum, tx) => sum + (tx.commissionAmount || tx.commissionPaid || 0), 0);
   
-  // Also fetch transactions for schools onboarded by this partner if not already in direct transactions
-  const extraSchoolTransactions = await prisma.transaction.findMany({
-    where: {
-      schoolId: { in: Array.from(onboardedSchoolIds) },
-      partnerId: { not: partner.id }
-    },
-    include: {
-      student: true,
-      school: true
-    }
-  });
+  const pendingCommission = directTransactions
+    .filter(tx => tx.commissionStatus === 'Pending')
+    .reduce((sum, tx) => sum + (tx.commissionAmount || tx.commissionPaid || 0), 0);
+  
+  const payableCommission = directTransactions
+    .filter(tx => tx.commissionStatus === 'Payable')
+    .reduce((sum, tx) => sum + (tx.commissionAmount || tx.commissionPaid || 0), 0);
 
-  const allAttributedTransactions = [...directTransactions, ...extraSchoolTransactions];
-
-  const totalBusinessGMV = allAttributedTransactions.reduce((sum, tx) => sum + tx.feeAmount, 0);
-
-  const totalCommissionEarned = directTransactions.reduce((sum, tx) => {
-    const base = tx.commissionPaid;
-    const bank = partner.shareBankCommission ? (tx.bankCommission || (tx.feeAmount * 0.01)) : 0;
-    return sum + base + bank;
-  }, 0);
+  const paidCommission = directTransactions
+    .filter(tx => tx.commissionStatus === 'Paid')
+    .reduce((sum, tx) => sum + (tx.commissionAmount || tx.commissionPaid || 0), 0);
 
   const totalStudentsFinanced = partner.onboardedSchools.reduce(
     (sum, school) => sum + school.students.length,
@@ -109,38 +99,30 @@ export default async function PartnerDashboardPage({
   );
 
   // Month-wise statement aggregation
-  const monthlyData: Record<string, { month: string; dealCount: number; gmv: number; commission: number }> = {};
+  const monthlyData: Record<string, { month: string; dealCount: number; loanVolume: number; commission: number }> = {};
 
-  allAttributedTransactions.forEach(tx => {
+  directTransactions.forEach(tx => {
     const dateObj = new Date(tx.date);
     const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
     const monthName = dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
     if (!monthlyData[monthKey]) {
-      monthlyData[monthKey] = { month: monthName, dealCount: 0, gmv: 0, commission: 0 };
+      monthlyData[monthKey] = { month: monthName, dealCount: 0, loanVolume: 0, commission: 0 };
     }
 
     monthlyData[monthKey].dealCount += 1;
-    monthlyData[monthKey].gmv += tx.feeAmount;
-    
-    // Commission is calculated for direct partner transactions
-    if (tx.partnerId === partner.id) {
-      const base = tx.commissionPaid;
-      const bank = partner.shareBankCommission ? (tx.bankCommission || (tx.feeAmount * 0.01)) : 0;
-      monthlyData[monthKey].commission += (base + bank);
-    }
+    monthlyData[monthKey].loanVolume += (tx.loanAmount || 0);
+    monthlyData[monthKey].commission += (tx.commissionAmount || tx.commissionPaid || 0);
   });
 
   const sortedMonths = Object.keys(monthlyData).sort().reverse().map(k => monthlyData[k]);
 
   // Per-School Roster Breakdown
   const schoolPerformance = partner.onboardedSchools.map(school => {
-    const schoolGMV = school.transactions.reduce((sum, tx) => sum + tx.feeAmount, 0);
+    const schoolLoanVolume = school.transactions.reduce((sum, tx) => sum + (tx.loanAmount || 0), 0);
     const schoolCommission = school.transactions.reduce((sum, tx) => {
       if (tx.partnerId === partner.id) {
-        const base = tx.commissionPaid;
-        const bank = partner.shareBankCommission ? (tx.bankCommission || (tx.feeAmount * 0.01)) : 0;
-        return sum + base + bank;
+        return sum + (tx.commissionAmount || tx.commissionPaid || 0);
       }
       return sum;
     }, 0);
@@ -153,7 +135,7 @@ export default async function PartnerDashboardPage({
       status: school.status,
       agreementStarts: new Date(school.agreementStarts).toLocaleDateString('en-IN'),
       studentCount: school.students.length,
-      gmv: schoolGMV,
+      loanVolume: schoolLoanVolume,
       commission: schoolCommission
     };
   });
@@ -171,7 +153,7 @@ export default async function PartnerDashboardPage({
               {partner.status}
             </span>
             <span className="badge badge-info" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
-              Rev Share: {partner.revenueShare}%
+              Default Commission: {partner.defaultCommission}%
             </span>
           </div>
           <h1 style={{ fontSize: "1.75rem", fontWeight: "700", margin: 0 }}>
@@ -207,14 +189,14 @@ export default async function PartnerDashboardPage({
 
         <div className="card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>
-            <span>Total Business (GMV)</span>
+            <span>Total Loan Volume</span>
             <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>trending_up</span>
           </div>
           <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-primary)' }}>
-            ₹{totalBusinessGMV.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+            ₹{totalBusinessLoanVolume.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Gross fee amount disbursed
+            Disbursed loan amount
           </div>
         </div>
 
@@ -227,7 +209,7 @@ export default async function PartnerDashboardPage({
             ₹{totalCommissionEarned.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Setup & bank share payouts
+            Pending: ₹{pendingCommission.toLocaleString('en-IN')} | Paid: ₹{paidCommission.toLocaleString('en-IN')}
           </div>
         </div>
 
@@ -263,7 +245,7 @@ export default async function PartnerDashboardPage({
               Status: s.status,
               AgreementStart: s.agreementStarts,
               Students: s.studentCount,
-              GMV: s.gmv,
+              LoanVolume: s.loanVolume,
               CommissionGenerated: s.commission
             }))}
           />
@@ -278,7 +260,7 @@ export default async function PartnerDashboardPage({
                 <th>Status</th>
                 <th>Agreement Start</th>
                 <th>Enrolled Students</th>
-                <th>Gross Business Volume</th>
+                <th>Disbursed Loan Volume</th>
                 <th>Commission Generated</th>
               </tr>
             </thead>
@@ -295,7 +277,7 @@ export default async function PartnerDashboardPage({
                   </td>
                   <td>{s.agreementStarts}</td>
                   <td style={{ textAlign: 'center', fontWeight: 500 }}>{s.studentCount}</td>
-                  <td style={{ fontWeight: 500 }}>₹{s.gmv.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+                  <td style={{ fontWeight: 500 }}>₹{s.loanVolume.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                   <td style={{ color: 'var(--primary)', fontWeight: 600 }}>
                     ₹{s.commission.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </td>
@@ -319,7 +301,7 @@ export default async function PartnerDashboardPage({
           <div>
             <h2 className="card-title">Monthly Commission Statement</h2>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "0.25rem" }}>
-              Aggregated monthly breakdown of transactions and earnings
+              Aggregated monthly breakdown of loan volume and commissions
             </p>
           </div>
           <ExportButton
@@ -327,7 +309,7 @@ export default async function PartnerDashboardPage({
             data={sortedMonths.map(m => ({
               Month: m.month,
               DisbursedDeals: m.dealCount,
-              GrossBusinessGMV: m.gmv,
+              DisbursedLoanVolume: m.loanVolume,
               CommissionEarned: m.commission
             }))}
           />
@@ -338,22 +320,22 @@ export default async function PartnerDashboardPage({
               <tr>
                 <th>Statement Month</th>
                 <th>Disbursed Deals</th>
-                <th>Gross Business Volume</th>
-                <th>Commission Share</th>
+                <th>Disbursed Loan Volume</th>
+                <th>Commission Earned</th>
                 <th>Payout Status</th>
               </tr>
             </thead>
             <tbody>
-              {sortedMonths.map((m, idx) => (
+              {sortedMonths.map((m) => (
                 <tr key={m.month}>
                   <td style={{ fontWeight: 600 }}>{m.month}</td>
                   <td>{m.dealCount} deals</td>
-                  <td>₹{m.gmv.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+                  <td>₹{m.loanVolume.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                   <td style={{ color: "var(--primary)", fontWeight: "600" }}>
                     ₹{m.commission.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </td>
                   <td>
-                    <span className="badge badge-success">Processed</span>
+                    <span className="badge badge-success">Active</span>
                   </td>
                 </tr>
               ))}
@@ -385,10 +367,10 @@ export default async function PartnerDashboardPage({
               StudentCode: tx.student?.code || 'N/A',
               StudentName: tx.student?.name || 'N/A',
               School: tx.school?.name || 'N/A',
-              FeeAmount: tx.feeAmount,
-              BaseCommission: tx.commissionPaid,
-              BankCommissionShare: partner.shareBankCommission ? (tx.bankCommission || (tx.feeAmount * 0.01)) : 0,
-              TotalCommission: tx.commissionPaid + (partner.shareBankCommission ? (tx.bankCommission || (tx.feeAmount * 0.01)) : 0)
+              LoanAmount: tx.loanAmount || 0,
+              CommissionRate: (tx.commissionRate || 0) + '%',
+              CommissionAmount: tx.commissionAmount || tx.commissionPaid || 0,
+              Status: tx.commissionStatus || 'Pending'
             }))}
           />
         </div>
@@ -400,29 +382,38 @@ export default async function PartnerDashboardPage({
                 <th>Student Code</th>
                 <th>Student Name</th>
                 <th>School</th>
-                <th>Fee Amount</th>
-                <th>Commission Paid</th>
+                <th>Loan Amount</th>
+                <th>Commission Rate</th>
+                <th>Commission Amount</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {directTransactions.slice(0, 15).map(tx => {
-                const totalComm = tx.commissionPaid + (partner.shareBankCommission ? (tx.bankCommission || (tx.feeAmount * 0.01)) : 0);
+                const comm = tx.commissionAmount || tx.commissionPaid || 0;
+                const status = tx.commissionStatus || 'Pending';
+                const statusBadge = status === 'Paid' ? 'badge-success' : status === 'Payable' ? 'badge-info' : 'badge-warning';
+                
                 return (
                   <tr key={tx.id}>
                     <td>{new Date(tx.date).toLocaleDateString('en-IN')}</td>
                     <td><span className="badge badge-info" style={{ fontFamily: 'monospace' }}>{tx.student?.code || 'N/A'}</span></td>
                     <td style={{ fontWeight: 500 }}>{tx.student?.name || 'N/A'}</td>
                     <td>{tx.school?.name || 'N/A'}</td>
-                    <td>₹{tx.feeAmount.toLocaleString('en-IN')}</td>
+                    <td>₹{(tx.loanAmount || 0).toLocaleString('en-IN')}</td>
+                    <td>{tx.commissionRate || partner.defaultCommission}%</td>
                     <td style={{ color: "var(--primary)", fontWeight: "600" }}>
-                      ₹{totalComm.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      ₹{comm.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    </td>
+                    <td>
+                      <span className={`badge ${statusBadge}`}>{status}</span>
                     </td>
                   </tr>
                 );
               })}
               {directTransactions.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
                     No transactions found for this partner.
                   </td>
                 </tr>

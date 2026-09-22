@@ -72,8 +72,7 @@ async function main() {
       name: 'EduConsult Pvt Ltd',
       type: 'Organization',
       contactInfo: 'partner@flexifee.in',
-      revenueShare: 50.0,
-      shareBankCommission: true,
+      defaultCommission: 2.5,
       status: 'Active'
     }
   })

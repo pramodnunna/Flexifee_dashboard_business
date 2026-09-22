@@ -91,7 +91,7 @@ async function main() {
       name: 'EduConsult Pvt Ltd',
       type: 'Organization',
       contactInfo: 'contact@educonsult.com',
-      revenueShare: 50.0,
+      defaultCommission: 2.5,
     }
   })
 
@@ -101,7 +101,7 @@ async function main() {
       name: 'Rahul Sharma',
       type: 'Individual',
       contactInfo: 'rahul.s@example.com',
-      revenueShare: 30.0,
+      defaultCommission: 2.0,
     }
   })
 
@@ -146,8 +146,9 @@ async function main() {
     const flexiProfitPercent = schoolDiscountRate - cutoff
     const revenueEarned = (flexiProfitPercent / 100) * s.annualFee
 
-    // Partner share (Agent priority -> School Onboarder fallback)
-    let commissionPaid = 0
+    // Loan-based partner commission calculation
+    let commissionRate = 0
+    let commissionAmount = 0
     let finalPartnerId = s.partnerId
 
     if (!finalPartnerId && s.schoolId === school1.id) {
@@ -155,8 +156,9 @@ async function main() {
     }
 
     if (finalPartnerId) {
-      const partnerRevShare = finalPartnerId === partner1.id ? 50.0 : 30.0
-      commissionPaid = (partnerRevShare / 100) * revenueEarned
+      const partnerObj = finalPartnerId === partner1.id ? partner1 : partner2
+      commissionRate = partnerObj.defaultCommission || 2.0
+      commissionAmount = s.loanAmount * (commissionRate / 100)
     }
 
     await prisma.transaction.create({
@@ -167,7 +169,11 @@ async function main() {
         feeAmount: s.annualFee,
         discountApplied: schoolDiscountRate,
         revenueEarned,
-        commissionPaid,
+        loanAmount: s.loanAmount,
+        commissionRate,
+        commissionAmount,
+        commissionPaid: commissionAmount,
+        commissionStatus: 'Paid',
         date: new Date(),
       }
     })

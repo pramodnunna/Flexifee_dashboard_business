@@ -55,16 +55,20 @@ export async function submitStudent(formData: FormData) {
 
   // 4. Commission Attribution Engine Priority
   let finalPartnerId: string | null = partnerId || school.onboardingPartnerId || null;
-  let commissionPaid = 0;
+  let commissionRate = 0;
+  let commissionAmount = 0;
 
   if (finalPartnerId) {
     const partner = await prisma.partner.findUnique({ where: { id: finalPartnerId } });
     if (partner && partner.status === 'Active') {
-      if (partner.shareBankCommission) {
-        commissionPaid = (partner.revenueShare / 100) * (revenueEarned + bankCommission);
+      if (school.partnerCommissionRate !== null && school.partnerCommissionRate !== undefined) {
+        commissionRate = school.partnerCommissionRate;
+      } else if (partner.defaultCommission !== null && partner.defaultCommission !== undefined) {
+        commissionRate = partner.defaultCommission;
       } else {
-        commissionPaid = (partner.revenueShare / 100) * revenueEarned;
+        commissionRate = 2.0;
       }
+      commissionAmount = loanAmount * (commissionRate / 100);
     } else {
       finalPartnerId = null;
     }
@@ -95,7 +99,11 @@ export async function submitStudent(formData: FormData) {
         feeAmount: annualFee,
         discountApplied: schoolDiscount.discountRate,
         revenueEarned,
-        commissionPaid,
+        loanAmount,
+        commissionRate,
+        commissionAmount,
+        commissionPaid: 0,
+        commissionStatus: 'Pending',
         bankCommission,
         date: new Date()
       }

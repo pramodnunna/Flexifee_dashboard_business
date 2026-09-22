@@ -9,6 +9,10 @@ export async function submitSchool(formData: FormData) {
   const name = formData.get('name')?.toString();
   const location = formData.get('location')?.toString();
   const partnerId = formData.get('partnerId')?.toString();
+  const partnerCommissionRateRaw = formData.get('partnerCommissionRate')?.toString();
+  const partnerCommissionRate = partnerCommissionRateRaw !== undefined && partnerCommissionRateRaw !== '' && !isNaN(parseFloat(partnerCommissionRateRaw))
+    ? parseFloat(partnerCommissionRateRaw)
+    : null;
   
   if (!name || !location) return;
 
@@ -36,6 +40,7 @@ export async function submitSchool(formData: FormData) {
       name,
       location,
       onboardingPartnerId: partnerId || null,
+      partnerCommissionRate,
       agreementStarts: new Date(),
       status: 'Active',
       discounts: discountsToCreate.length > 0 ? { create: discountsToCreate } : undefined

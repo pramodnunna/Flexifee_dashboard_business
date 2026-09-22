@@ -29,6 +29,11 @@ export async function updateSchool(formData: FormData) {
     }
   }
 
+  const partnerCommissionRateRaw = formData.get('partnerCommissionRate')?.toString();
+  const partnerCommissionRate = partnerCommissionRateRaw !== undefined && partnerCommissionRateRaw !== '' && !isNaN(parseFloat(partnerCommissionRateRaw))
+    ? parseFloat(partnerCommissionRateRaw)
+    : null;
+
   // Update school basic info
   await prisma.school.update({
     where: { id: schoolId },
@@ -37,6 +42,7 @@ export async function updateSchool(formData: FormData) {
       location,
       status,
       onboardingPartnerId: partnerId || null,
+      partnerCommissionRate,
     },
   });
 

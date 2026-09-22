@@ -60,36 +60,21 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
           </div>
           
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Revenue Share Percentage</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Default Commission Percentage (%)</label>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-              What percentage of FlexiFee's total profit should this partner earn on every completed transaction?
+              Standard commission rate calculated on the disbursed loan amount for transactions attributed to this partner. (Note: rate updates apply to future transactions).
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input 
                 type="number" 
                 step="0.1" 
-                name="revenueShare" 
-                defaultValue={partner.revenueShare} 
+                name="defaultCommission" 
+                defaultValue={partner.defaultCommission} 
                 required 
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }} 
               />
               <span style={{ color: 'var(--text-muted)' }}>%</span>
             </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>
-              <input 
-                type="checkbox" 
-                name="shareBankCommission" 
-                defaultChecked={partner.shareBankCommission} 
-                style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }} 
-              />
-              <span>Share Bank Commission?</span>
-            </label>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginLeft: '2rem' }}>
-              If enabled, this partner will earn their revenue share percentage on the bank commission as well as the subvention profit.
-            </p>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>

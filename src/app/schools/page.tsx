@@ -19,7 +19,7 @@ export default async function SchoolsPage() {
         select: { feeAmount: true, revenueEarned: true }
       },
       discounts: true,
-      onboardingPartner: { select: { name: true } }
+      onboardingPartner: { select: { name: true, defaultCommission: true } }
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -46,14 +46,23 @@ export default async function SchoolsPage() {
           <h2 className="card-title">School Roster</h2>
           <ExportButton 
             filename="schools_roster"
-            data={schools.map(s => ({
-              ID: s.id,
-              Name: s.name,
-              Location: s.location,
-              StudentsCount: s._count.students,
-              Discounts: s.discounts.map(d => `${d.tenure}M/${d.advanceEmi}Adv: ${d.discountRate}%`).join(' | '),
-              Status: s.status
-            }))}
+            data={schools.map(s => {
+              const commRateStr = s.partnerCommissionRate !== null && s.partnerCommissionRate !== undefined
+                ? `${s.partnerCommissionRate}% (Override)`
+                : s.onboardingPartner
+                  ? `${s.onboardingPartner.defaultCommission}% (Partner Default)`
+                  : 'N/A';
+              return {
+                ID: s.id,
+                Name: s.name,
+                Location: s.location,
+                StudentsCount: s._count.students,
+                Discounts: s.discounts.map(d => `${d.tenure}M/${d.advanceEmi}Adv: ${d.discountRate}%`).join(' | '),
+                Partner: s.onboardingPartner?.name || 'Direct Sales',
+                CommissionRate: commRateStr,
+                Status: s.status
+              };
+            })}
           />
         </div>
         <div className="table-container">
@@ -66,6 +75,7 @@ export default async function SchoolsPage() {
                 <th>Students Enrolled</th>
                 <th>Discount Options</th>
                 <th>Onboarding Partner</th>
+                <th>Commission Rate</th>
                 <th>Revenue Generated</th>
                 <th>Status</th>
                 {isAdmin && <th>Actions</th>}
@@ -74,6 +84,7 @@ export default async function SchoolsPage() {
             <tbody>
               {schools.map(school => {
                 const totalRevenue = school.transactions.reduce((acc, sum) => acc + sum.revenueEarned, 0);
+                const hasOverride = school.partnerCommissionRate !== null && school.partnerCommissionRate !== undefined;
                 
                 return (
                   <tr key={school.id} style={school.status === 'Inactive' ? { opacity: 0.6 } : undefined}>
@@ -94,6 +105,19 @@ export default async function SchoolsPage() {
                         ? <span className="badge badge-info">{school.onboardingPartner.name}</span>
                         : <span style={{ color: 'var(--text-muted)' }}>Direct Sales</span>
                       }
+                    </td>
+                    <td>
+                      {hasOverride ? (
+                        <span className="badge badge-success" title="School-Specific Override">
+                          {school.partnerCommissionRate}% (Custom)
+                        </span>
+                      ) : school.onboardingPartner ? (
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          {school.onboardingPartner.defaultCommission}% (Default)
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>—</span>
+                      )}
                     </td>
                     <td>₹{totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                     <td>

@@ -8,10 +8,9 @@ export async function editPartner(id: string, formData: FormData) {
   const name = formData.get('name')?.toString();
   const type = formData.get('type')?.toString();
   const contactInfo = formData.get('contactInfo')?.toString();
-  const revenueShare = parseFloat(formData.get('revenueShare')?.toString() || '0');
-  const shareBankCommission = formData.get('shareBankCommission') === 'on';
+  const defaultCommission = parseFloat(formData.get('defaultCommission')?.toString() || '2.0');
   
-  if (!name || !type || !contactInfo || isNaN(revenueShare)) return;
+  if (!name || !type || !contactInfo || isNaN(defaultCommission)) return;
 
   await prisma.partner.update({
     where: { id },
@@ -19,8 +18,7 @@ export async function editPartner(id: string, formData: FormData) {
       name,
       type,
       contactInfo,
-      revenueShare,
-      shareBankCommission
+      defaultCommission
     }
   });
 

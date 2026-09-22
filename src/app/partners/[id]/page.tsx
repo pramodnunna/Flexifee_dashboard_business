@@ -35,8 +35,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
     monthKey: string;
     monthName: string;
     dealsCount: number;
-    feeVolume: number;
-    subventionProfit: number;
+    loanVolume: number;
     commissionEarned: number;
   }> = {};
 
@@ -50,24 +49,22 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
         monthKey,
         monthName,
         dealsCount: 0,
-        feeVolume: 0,
-        subventionProfit: 0,
+        loanVolume: 0,
         commissionEarned: 0
       };
     }
 
     monthlyData[monthKey].dealsCount += 1;
-    monthlyData[monthKey].feeVolume += tx.feeAmount;
-    monthlyData[monthKey].subventionProfit += tx.revenueEarned;
-    monthlyData[monthKey].commissionEarned += tx.commissionPaid;
+    monthlyData[monthKey].loanVolume += (tx.loanAmount || 0);
+    monthlyData[monthKey].commissionEarned += (tx.commissionAmount || tx.commissionPaid || 0);
   }
 
   const sortedMonths = Object.keys(monthlyData)
     .sort((a, b) => b.localeCompare(a))
     .map(key => monthlyData[key]);
 
-  const totalAllCommission = partner.transactions.reduce((acc, tx) => acc + tx.commissionPaid, 0);
-  const totalAllFeeVolume = partner.transactions.reduce((acc, tx) => acc + tx.feeAmount, 0);
+  const totalAllCommission = partner.transactions.reduce((acc, tx) => acc + (tx.commissionAmount || tx.commissionPaid || 0), 0);
+  const totalAllLoanVolume = partner.transactions.reduce((acc, tx) => acc + (tx.loanAmount || 0), 0);
 
   return (
     <div className="partner-detail-container">
@@ -175,7 +172,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
       {/* Printable Letterhead Header */}
       <div className="statement-header-print">
         <h1>FlexiFee</h1>
-        <p>Partner Earning & Commission Payout Statement</p>
+        <p>Partner Loan Commission Payout Statement</p>
         <p style={{ fontSize: '8pt', color: '#666', marginTop: '4px' }}>Generated on: {new Date().toLocaleDateString('en-IN')}</p>
       </div>
 
@@ -198,9 +195,8 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
               data={sortedMonths.map(m => ({
                 Month: m.monthName,
                 'Deals Closed': m.dealsCount,
-                'Fee Volume (GMV)': m.feeVolume,
-                'Gross Revenue (Subvention)': m.subventionProfit,
-                'Retained Commission': m.commissionEarned
+                'Disbursed Loan Volume': m.loanVolume,
+                'Commission Earned': m.commissionEarned
               }))}
             />
             <PrintButton />
@@ -215,14 +211,14 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
               <strong style={{ fontSize: '0.9375rem' }}>{partner.contactInfo}</strong>
             </div>
             <div>
-              <span style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Agreement Revenue Share</span>
-              <strong style={{ fontSize: '0.9375rem' }}>{partner.revenueShare}%</strong>
+              <span style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Default Loan Commission Rate</span>
+              <strong style={{ fontSize: '0.9375rem' }}>{partner.defaultCommission}%</strong>
             </div>
           </div>
           <div>
             <div style={{ marginBottom: '0.75rem' }}>
-              <span style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Share Bank Commission?</span>
-              <strong style={{ fontSize: '0.9375rem' }}>{partner.shareBankCommission ? "Enabled (includes 1% setup fee commission)" : "Disabled (subvention only)"}</strong>
+              <span style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Total Disbursed Loan Volume</span>
+              <strong style={{ fontSize: '0.9375rem' }}>{formatCurrency(totalAllLoanVolume)}</strong>
             </div>
             <div>
               <span style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Lifetime Commission Earned</span>
@@ -241,9 +237,8 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
               <tr>
                 <th>Billing Month</th>
                 <th>Deals Closed</th>
-                <th>Fee Volume (GMV)</th>
-                <th>Gross Subvention Rev.</th>
-                <th>Retained Commission</th>
+                <th>Disbursed Loan Volume</th>
+                <th>Commission Earned</th>
               </tr>
             </thead>
             <tbody>
@@ -251,14 +246,13 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
                 <tr key={m.monthKey}>
                   <td style={{ fontWeight: 600 }}>{m.monthName}</td>
                   <td>{m.dealsCount}</td>
-                  <td style={{ fontWeight: 500 }}>{formatCurrency(m.feeVolume)}</td>
-                  <td style={{ color: 'var(--success)', fontWeight: 500 }}>+{formatCurrency(m.subventionProfit)}</td>
+                  <td style={{ fontWeight: 500 }}>{formatCurrency(m.loanVolume)}</td>
                   <td style={{ color: 'var(--primary)', fontWeight: 700 }}>{formatCurrency(m.commissionEarned)}</td>
                 </tr>
               ))}
               {sortedMonths.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                     No earnings or transactions recorded for this partner.
                   </td>
                 </tr>

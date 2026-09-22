@@ -154,13 +154,17 @@ export async function importStudents(prevState: any, formData: FormData): Promis
       const revenueEarned = (flexiProfitPercent / 100) * annualFee;
       const bankCommission = annualFee * 0.01;
       
-      let commissionPaid = 0;
+      let commissionRate = 0;
+      let commissionAmount = 0;
       if (partner) {
-        if (partner.shareBankCommission) {
-          commissionPaid = (partner.revenueShare / 100) * (revenueEarned + bankCommission);
+        if (school.partnerCommissionRate !== null && school.partnerCommissionRate !== undefined) {
+          commissionRate = school.partnerCommissionRate;
+        } else if (partner.defaultCommission !== null && partner.defaultCommission !== undefined) {
+          commissionRate = partner.defaultCommission;
         } else {
-          commissionPaid = (partner.revenueShare / 100) * revenueEarned;
+          commissionRate = 2.0;
         }
+        commissionAmount = loanAmount * (commissionRate / 100);
       }
 
       // Generate unique code inside the loop safely
@@ -192,7 +196,11 @@ export async function importStudents(prevState: any, formData: FormData): Promis
           feeAmount: annualFee,
           discountApplied: schoolDiscount.discountRate,
           revenueEarned,
-          commissionPaid,
+          loanAmount,
+          commissionRate,
+          commissionAmount,
+          commissionPaid: 0,
+          commissionStatus: 'Pending',
           bankCommission,
           date: new Date()
         }

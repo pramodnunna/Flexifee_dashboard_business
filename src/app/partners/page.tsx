@@ -13,7 +13,7 @@ export default async function PartnersPage() {
   const partners = await prisma.partner.findMany({
     include: {
       transactions: {
-        select: { feeAmount: true, commissionPaid: true, revenueEarned: true }
+        select: { feeAmount: true, loanAmount: true, commissionAmount: true, commissionPaid: true, revenueEarned: true }
       }
     },
     orderBy: { createdAt: 'desc' }
@@ -21,15 +21,15 @@ export default async function PartnersPage() {
 
   // Calculate Leaderboard metrics
   const partnersWithMetrics = partners.map(partner => {
-    const totalCommission = partner.transactions.reduce((acc, tx) => acc + tx.commissionPaid, 0);
+    const totalCommission = partner.transactions.reduce((acc, tx) => acc + (tx.commissionAmount || tx.commissionPaid || 0), 0);
     const totalTransactions = partner.transactions.length;
-    const revenueContribution = partner.transactions.reduce((acc, tx) => acc + tx.revenueEarned, 0);
+    const totalLoanVolume = partner.transactions.reduce((acc, tx) => acc + (tx.loanAmount || 0), 0);
 
     return {
       ...partner,
       totalCommission,
       totalTransactions,
-      revenueContribution
+      totalLoanVolume
     };
   }).sort((a, b) => b.totalCommission - a.totalCommission);
 
@@ -38,14 +38,14 @@ export default async function PartnersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "2rem" }}>
         <div>
           <h1 style={{ fontSize: "1.5rem", fontWeight: "600", marginBottom: "0.5rem" }}>Partners Management & Leaderboard</h1>
-          <p style={{ color: "var(--text-secondary)" }}>Track partner performance and commission payouts.</p>
+          <p style={{ color: "var(--text-secondary)" }}>Track partner performance and loan commission payouts.</p>
         </div>
       </div>
 
       <div className="card" style={{ marginBottom: "2rem", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 className="card-title">Add New Partner</h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginTop: '0.25rem' }}>Full onboarding flow setting up partner type and revenue share.</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginTop: '0.25rem' }}>Full onboarding flow setting up partner type and default loan commission rate.</p>
         </div>
         <a href="/partners/onboard" className="btn btn-primary" style={{ padding: "0.75rem 1.5rem" }}>Onboard Partner</a>
       </div>
@@ -60,9 +60,9 @@ export default async function PartnersPage() {
               Name: p.name,
               Type: p.type,
               Status: p.status,
-              RevShare: p.revenueShare + '%',
+              DefaultComm: p.defaultCommission + '%',
               DealsClosed: p.totalTransactions,
-              RevenueContributed: p.revenueContribution,
+              TotalLoanVolume: p.totalLoanVolume,
               CommissionEarned: p.totalCommission
             }))}
           />
@@ -76,9 +76,9 @@ export default async function PartnersPage() {
                 <th>Partner Name</th>
                 <th>Type</th>
                 <th>Status</th>
-                <th>Rev Share</th>
+                <th>Default Comm %</th>
                 <th>Deals Closed</th>
-                <th>Revenue Contributed</th>
+                <th>Total Loan Volume</th>
                 <th>Commission Earned</th>
                 {isAdmin && <th>Actions</th>}
               </tr>
@@ -104,9 +104,9 @@ export default async function PartnersPage() {
                   <td>
                     <span className={`badge ${partner.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>{partner.status}</span>
                   </td>
-                  <td>{partner.revenueShare}%</td>
+                  <td>{partner.defaultCommission}%</td>
                   <td>{partner.totalTransactions}</td>
-                  <td>₹{partner.revenueContribution.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+                  <td>₹{partner.totalLoanVolume.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                   <td style={{ color: "var(--primary)", fontWeight: "600" }}>₹{partner.totalCommission.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                   {isAdmin && (
                     <td>

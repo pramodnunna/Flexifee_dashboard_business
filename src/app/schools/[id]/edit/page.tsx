@@ -122,10 +122,26 @@ export default async function EditSchoolPage({
                 <option value="">-- No Partner (Direct Sales) --</option>
                 {partners.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.type})
+                    {p.name} ({p.type} - Default {p.defaultCommission}%)
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                School-Specific Commission Override (%)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                name="partnerCommissionRate"
+                defaultValue={school.partnerCommissionRate !== null && school.partnerCommissionRate !== undefined ? school.partnerCommissionRate : ''}
+                placeholder="Leave blank for Partner Default"
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+              />
             </div>
           </div>
 

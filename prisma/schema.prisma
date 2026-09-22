@@ -9,20 +9,21 @@ datasource db {
 }
 
 model School {
-  id                String   @id @default(cuid())
-  code              String   @unique
-  name              String
-  location          String
-  totalStudentsCap  Int?
-  agreementStarts   DateTime
-  status            String   @default("Active") // Active, Pipeline, Inactive
-  students          Student[]
-  transactions      Transaction[]
-  discounts         SchoolDiscount[]
+  id                  String   @id @default(cuid())
+  code                String   @unique
+  name                String
+  location            String
+  totalStudentsCap    Int?
+  agreementStarts     DateTime
+  status              String   @default("Active") // Active, Pipeline, Inactive
+  partnerCommissionRate Float? // School-specific partner commission % override (null = use partner default)
+  students            Student[]
+  transactions        Transaction[]
+  discounts           SchoolDiscount[]
   onboardingPartnerId String?
   onboardingPartner   Partner? @relation(fields: [onboardingPartnerId], references: [id])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model SchoolDiscount {
@@ -55,8 +56,7 @@ model Partner {
   name              String
   type              String   // Individual, Organization
   contactInfo       String
-  revenueShare      Float    // % of FlexiFee setup profit shared
-  shareBankCommission Boolean  @default(false)
+  defaultCommission Float    @default(2.0) // Default partner commission % on loan amount
   status            String   @default("Active") // Active, Inactive
   transactions      Transaction[]
   onboardedSchools  School[]
@@ -93,7 +93,11 @@ model Transaction {
   feeAmount         Float
   discountApplied   Float    // Calculated
   revenueEarned     Float    // Calculated
-  commissionPaid    Float    // Calculated
+  loanAmount        Float    @default(0) // Disbursed loan amount
+  commissionRate    Float    @default(0) // Locked commission % at disbursement
+  commissionAmount  Float    @default(0) // Locked commission amount = loanAmount * (commissionRate / 100)
+  commissionPaid    Float    @default(0) // Amount paid out to partner
+  commissionStatus  String   @default("Pending") // Pending, Payable, Paid
   bankCommission    Float    @default(0) // Calculated as 1% of feeAmount
   date              DateTime @default(now())
 }
@@ -109,3 +113,4 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
