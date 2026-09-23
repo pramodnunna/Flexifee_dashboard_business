@@ -146,7 +146,7 @@ async function main() {
     const flexiProfitPercent = schoolDiscountRate - cutoff
     const revenueEarned = (flexiProfitPercent / 100) * s.annualFee
 
-    // Loan-based partner commission calculation
+    // Loan-based partner commission calculation with excess margin
     let commissionRate = 0
     let commissionAmount = 0
     let finalPartnerId = s.partnerId
@@ -155,10 +155,24 @@ async function main() {
       finalPartnerId = partner1.id
     }
 
+    const partnerBaseRateMap = {
+      "6_1": 6.50,
+      "8_1": 8.00,
+      "10_1": 9.50,
+      "10_2": 8.00,
+      "12_2": 9.50,
+    }
+    const pBaseKey = `${s.tenure}_${s.advanceEmi}`
+    const partnerBase = partnerBaseRateMap[pBaseKey] || 0
+    let extraCommission = 0
+    if (partnerBase > 0 && schoolDiscountRate > partnerBase) {
+      extraCommission = schoolDiscountRate - partnerBase
+    }
+
     if (finalPartnerId) {
       const partnerObj = finalPartnerId === partner1.id ? partner1 : partner2
-      commissionRate = partnerObj.defaultCommission || 1.0
-      commissionAmount = s.loanAmount * (commissionRate / 100)
+      commissionRate = parseFloat(((partnerObj.defaultCommission || 1.0) + extraCommission).toFixed(4))
+      commissionAmount = parseFloat((s.loanAmount * (commissionRate / 100)).toFixed(2))
     }
 
     await prisma.transaction.create({
@@ -174,6 +188,7 @@ async function main() {
         commissionAmount,
         commissionPaid: commissionAmount,
         commissionStatus: 'Paid',
+        bankCommission: parseFloat((s.annualFee * 0.01).toFixed(2)),
         date: new Date(),
       }
     })

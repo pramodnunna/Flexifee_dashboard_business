@@ -97,17 +97,21 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                 </tr>
               </thead>
               <tbody>
-                {student.transactions.map(t => (
-                  <tr key={t.id}>
-                    <td>{new Date(t.date).toLocaleDateString()}</td>
-                    <td>₹{t.feeAmount.toLocaleString('en-IN')}</td>
-                    <td>₹{t.discountApplied.toLocaleString('en-IN')}</td>
-                    <td>₹{t.revenueEarned.toLocaleString('en-IN')}</td>
-                    <td style={{ color: "var(--destructive)" }}>-₹{(t.commissionAmount || t.commissionPaid).toLocaleString('en-IN')}</td>
-                    <td style={{ color: "var(--secondary)" }}>+₹{t.bankCommission.toLocaleString('en-IN')}</td>
-                    <td style={{ fontWeight: 600, color: (t.revenueEarned - (t.commissionAmount || t.commissionPaid) + t.bankCommission) >= 0 ? 'var(--primary)' : 'var(--destructive)' }}>₹{(t.revenueEarned - (t.commissionAmount || t.commissionPaid) + t.bankCommission).toLocaleString('en-IN')}</td>
-                  </tr>
-                ))}
+                {student.transactions.map(t => {
+                  const comm = t.commissionAmount || t.commissionPaid || 0;
+                  const net = t.revenueEarned - comm + t.bankCommission;
+                  return (
+                    <tr key={t.id}>
+                      <td>{new Date(t.date).toLocaleDateString()}</td>
+                      <td>₹{t.feeAmount.toLocaleString('en-IN')}</td>
+                      <td>{t.discountApplied}%</td>
+                      <td>₹{t.revenueEarned.toLocaleString('en-IN')}</td>
+                      <td style={{ color: "var(--destructive)" }}>-₹{comm.toLocaleString('en-IN')}</td>
+                      <td style={{ color: "var(--secondary)" }}>+₹{t.bankCommission.toLocaleString('en-IN')}</td>
+                      <td style={{ fontWeight: 600, color: net >= 0 ? 'var(--primary)' : 'var(--destructive)' }}>₹{net.toLocaleString('en-IN')}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

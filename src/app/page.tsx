@@ -124,27 +124,27 @@ export default async function Dashboard() {
           <div className="kpi-icon kpi-icon-red">
             <span className="material-symbols-outlined">payments</span>
           </div>
-          <div className="kpi-label">Commission Paid</div>
+          <div className="kpi-label">Partner Commission</div>
           <div className="kpi-value" style={{ color: 'var(--destructive)' }}>{formatCurrency(totalCommission)}</div>
-          <div className="kpi-sub">Partner revenue share payouts</div>
+          <div className="kpi-sub">Total partner loan commissions</div>
         </div>
 
-        <div className="kpi-card" style={{ '--kpi-accent': '#F59E0B' } as React.CSSProperties}>
-          <div className="kpi-icon kpi-icon-amber">
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--secondary)' } as React.CSSProperties}>
+          <div className="kpi-icon kpi-icon-blue">
             <span className="material-symbols-outlined">account_balance</span>
           </div>
           <div className="kpi-label">Bank Commission</div>
-          <div className="kpi-value" style={{ color: '#B45309' }}>{formatCurrency(totalBankCommission)}</div>
-          <div className="kpi-sub">1% of fee volume earned</div>
+          <div className="kpi-value" style={{ color: 'var(--secondary)' }}>{formatCurrency(totalBankCommission)}</div>
+          <div className="kpi-sub">From financing institutions (1%)</div>
         </div>
 
         <div className="kpi-card" style={{ '--kpi-accent': 'var(--primary)', borderColor: 'var(--primary)', borderWidth: '2px' } as React.CSSProperties}>
           <div className="kpi-icon kpi-icon-blue">
             <span className="material-symbols-outlined">diamond</span>
           </div>
-          <div className="kpi-label">Net Revenue</div>
+          <div className="kpi-label">Net Retained</div>
           <div className="kpi-value" style={{ color: 'var(--primary)' }}>{formatCurrency(netRevenue)}</div>
-          <div className="kpi-sub">After all partner payouts</div>
+          <div className="kpi-sub">Subvention + Bank Comm - Partner Payouts</div>
         </div>
       </div>
 
@@ -215,33 +215,37 @@ export default async function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {transactions.slice(0, 10).map(tx => (
-                <tr key={tx.id}>
-                  <td>{new Date(tx.date).toLocaleDateString()}</td>
-                  <td>
-                    <div style={{ fontWeight: 600 }}>{tx.student.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 500 }}>{tx.student.code}</div>
-                  </td>
-                  <td>{tx.school.name}</td>
-                  <td>
-                    {tx.partner
-                      ? (
-                        <>
-                          <div>{tx.partner.name}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{tx.partner.code}</div>
-                        </>
-                      )
-                      : <span style={{ color: 'var(--text-muted)' }}>Direct</span>
-                    }
-                  </td>
-                  <td style={{ fontWeight: 600 }}>{formatCurrency(tx.feeAmount)}</td>
-                  <td><span className="badge badge-info">{tx.discountApplied}%</span></td>
-                  <td style={{ color: "var(--success)", fontWeight: 700 }}>+{formatCurrency(tx.revenueEarned)}</td>
-                  <td style={{ color: "var(--destructive)", fontWeight: 600 }}>-{formatCurrency(tx.commissionPaid)}</td>
-                  <td style={{ color: "var(--success)", fontWeight: 600 }}>+{formatCurrency(tx.bankCommission)}</td>
-                  <td style={{ fontWeight: 800, color: 'var(--primary)' }}>{formatCurrency(tx.revenueEarned - tx.commissionPaid + tx.bankCommission)}</td>
-                </tr>
-              ))}
+              {transactions.slice(0, 10).map(tx => {
+                const comm = tx.commissionAmount || tx.commissionPaid || 0;
+                const net = tx.revenueEarned - comm + tx.bankCommission;
+                return (
+                  <tr key={tx.id}>
+                    <td>{new Date(tx.date).toLocaleDateString()}</td>
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{tx.student.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 500 }}>{tx.student.code}</div>
+                    </td>
+                    <td>{tx.school.name}</td>
+                    <td>
+                      {tx.partner
+                        ? (
+                          <>
+                            <div>{tx.partner.name}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{tx.partner.code}</div>
+                          </>
+                        )
+                        : <span style={{ color: 'var(--text-muted)' }}>Direct</span>
+                      }
+                    </td>
+                    <td style={{ fontWeight: 600 }}>{formatCurrency(tx.feeAmount)}</td>
+                    <td><span className="badge badge-info">{tx.discountApplied}%</span></td>
+                    <td style={{ color: "var(--success)", fontWeight: 700 }}>+{formatCurrency(tx.revenueEarned)}</td>
+                    <td style={{ color: "var(--destructive)", fontWeight: 600 }}>-{formatCurrency(comm)}</td>
+                    <td style={{ color: "var(--secondary)", fontWeight: 600 }}>+{formatCurrency(tx.bankCommission)}</td>
+                    <td style={{ fontWeight: 800, color: 'var(--primary)' }}>{formatCurrency(net)}</td>
+                  </tr>
+                );
+              })}
               {transactions.length === 0 && (
                 <tr>
                   <td colSpan={10} style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>

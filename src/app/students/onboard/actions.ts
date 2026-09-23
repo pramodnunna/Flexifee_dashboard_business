@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { generateStudentCode } from "@/lib/codeGenerator";
+import { calculatePartnerCommissionRate } from "@/lib/commission";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -50,7 +51,6 @@ export async function submitStudent(formData: FormData) {
   // 3. Mathematical Profit Engine
   const flexiProfitPercent = schoolDiscount.discountRate - cutoff.subvention;
   const revenueEarned = (flexiProfitPercent / 100) * annualFee;
-
   const bankCommission = annualFee * 0.01;
 
   // 4. Commission Attribution Engine Priority
@@ -61,13 +61,13 @@ export async function submitStudent(formData: FormData) {
   if (finalPartnerId) {
     const partner = await prisma.partner.findUnique({ where: { id: finalPartnerId } });
     if (partner && partner.status === 'Active') {
-      if (school.partnerCommissionRate !== null && school.partnerCommissionRate !== undefined) {
-        commissionRate = school.partnerCommissionRate;
-      } else if (partner.defaultCommission !== null && partner.defaultCommission !== undefined) {
-        commissionRate = partner.defaultCommission;
-      } else {
-        commissionRate = 1.0;
-      }
+      commissionRate = calculatePartnerCommissionRate({
+        tenure,
+        advanceEmi,
+        schoolDiscountRate: schoolDiscount.discountRate,
+        partnerDefaultCommission: partner.defaultCommission,
+        schoolCommissionOverride: school.partnerCommissionRate,
+      });
       commissionAmount = loanAmount * (commissionRate / 100);
     } else {
       finalPartnerId = null;
@@ -111,6 +111,9 @@ export async function submitStudent(formData: FormData) {
   });
 
   revalidatePath('/students');
+  revalidatePath('/transactions');
+  revalidatePath('/partner-dashboard');
+  revalidatePath('/partners');
   revalidatePath('/');
   redirect('/students');
 }

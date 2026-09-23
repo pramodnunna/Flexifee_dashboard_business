@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import * as XLSX from 'xlsx';
+import { calculatePartnerCommissionRate } from "@/lib/commission";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -157,13 +158,13 @@ export async function importStudents(prevState: any, formData: FormData): Promis
       let commissionRate = 0;
       let commissionAmount = 0;
       if (partner) {
-        if (school.partnerCommissionRate !== null && school.partnerCommissionRate !== undefined) {
-          commissionRate = school.partnerCommissionRate;
-        } else if (partner.defaultCommission !== null && partner.defaultCommission !== undefined) {
-          commissionRate = partner.defaultCommission;
-        } else {
-          commissionRate = 1.0;
-        }
+        commissionRate = calculatePartnerCommissionRate({
+          tenure,
+          advanceEmi,
+          schoolDiscountRate: schoolDiscount.discountRate,
+          partnerDefaultCommission: partner.defaultCommission,
+          schoolCommissionOverride: school.partnerCommissionRate,
+        });
         commissionAmount = loanAmount * (commissionRate / 100);
       }
 

@@ -174,10 +174,12 @@ export default function StudentOnboardForm({
                 const isSelected = planKey === (selectedPlanKey || `${adoptedPlans[0].tenure}_${adoptedPlans[0].advanceEmi}`);
 
                 return (
-                  <div
+                  <label
                     key={plan.id}
+                    htmlFor={`plan_${plan.id}`}
                     onClick={() => setSelectedPlanKey(planKey)}
                     style={{
+                      display: 'block',
                       padding: '1rem',
                       borderRadius: '8px',
                       border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border-color)',
@@ -188,6 +190,14 @@ export default function StudentOnboardForm({
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                       <span style={{ fontWeight: 700, fontSize: '1rem', color: isSelected ? 'var(--primary)' : 'var(--text-primary)' }}>
+                        <input
+                          type="radio"
+                          id={`plan_${plan.id}`}
+                          name="planSelectionRadio"
+                          checked={isSelected}
+                          onChange={() => setSelectedPlanKey(planKey)}
+                          style={{ marginRight: '0.5rem', accentColor: 'var(--primary)' }}
+                        />
                         {plan.tenure} Months Tenure
                       </span>
                       {isSelected && (
@@ -196,13 +206,13 @@ export default function StudentOnboardForm({
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', paddingLeft: '1.5rem' }}>
                       Advance EMIs: <strong>{plan.advanceEmi} Upfront</strong>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: 600, paddingLeft: '1.5rem' }}>
                       School Discount Rate: {plan.discountRate}%
                     </div>
-                  </div>
+                  </label>
                 );
               })}
             </div>

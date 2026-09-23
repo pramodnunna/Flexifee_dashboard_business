@@ -24,6 +24,7 @@ export default async function TransactionsPage() {
   const totalRevenue = transactions.reduce((acc, tx) => acc + tx.revenueEarned, 0);
   const totalCommission = transactions.reduce((acc, tx) => acc + (tx.commissionAmount || tx.commissionPaid || 0), 0);
   const totalBankCommission = transactions.reduce((acc, tx) => acc + tx.bankCommission, 0);
+  const netRetained = totalRevenue - totalCommission + totalBankCommission;
 
   return (
     <div>
@@ -53,7 +54,7 @@ export default async function TransactionsPage() {
         </div>
         <div className="card" style={{ border: '2px solid var(--primary)' }}>
           <div className="card-header"><span className="card-title">Net Retained</span></div>
-          <div className="kpi-value">{formatCurrency(totalRevenue - totalCommission + totalBankCommission)}</div>
+          <div className="kpi-value">{formatCurrency(netRetained)}</div>
         </div>
       </div>
 
